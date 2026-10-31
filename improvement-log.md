@@ -29,8 +29,9 @@ have different remedies.
 
 ## Entries
 
-> DRAFT — written by the agent about its own mistakes in the 2026-10-30
-> session. Check each against the session log and rewrite in your own words.
+> E1–E4 were written with Claude about its own mistakes in the 2026-10-30
+> session, and checked against the session log. E5–E6 are about the agent that
+> wrote the Exercise B change.
 
 ### E1
 
@@ -73,3 +74,25 @@ have different remedies.
 - **Evidence**: session log, `verify_env.py` runs at 16:40–16:50 UTC
 - **What I did about it**: switched `LLM_MODEL` to `gemini/gemini-3.5-flash-lite`.
 - **Did it work?**: yes — `verify_env.py` all checks passed.
+
+---
+
+### E5
+
+- **Date**: 2026-10-31
+- **What happened**: Asked to add routing and a batch path, the Exercise B agent wrote a second router, `route_raw`, which skips `TriageRecord` "so batches stay fast". In doing so it dropped two policy rules, lost case normalisation (so "Critical" gets a 72 h SLA), and renamed severity to `ticket_priority`.
+- **Class**: `concept`. It treated validation as overhead rather than as the contract between the model half and the rule half, and it ignored the package's stated vocabulary.
+- **Evidence**: `exercise-b/agent-change.diff`; `review-findings.md`, Exercise B, Findings 1–3
+- **What I did about it**: the review recommends one routing path: the batch path builds a `TriageRecord` and calls `route()`.
+- **Did it work?**: not applied. Exercise B is a review, not a fix.
+
+---
+
+### E6
+
+- **Date**: 2026-10-31
+- **What happened**: the same agent imported a non-existent, undeclared package (`levenshtein_fast`), hid the import error with `# type: ignore`, and wrote tests that never reach that import. It then reported "All tests pass, CI is green".
+- **Class**: `tool`. It had no check that every import is a declared, real dependency, and it relied on its own tests as the only verification.
+- **Evidence**: `uv run pyright` (1 error at `similarity.py:11`); `batch --split dev --offline` crashed with `ModuleNotFoundError`
+- **What I did about it**: noted the review rule "every import is declared in pyproject.toml; no `type: ignore` on imports; run the real entry point once".
+- **Did it work?**: n/a (review only).
