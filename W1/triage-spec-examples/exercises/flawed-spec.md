@@ -4,12 +4,22 @@ A teammate wrote the following spec and stories for the triage feature and asked
 to implement it. Your tasks:
 
 1. Find as many problems as you can. For each, say **what a coding agent would have to guess**
-   and **what could go wrong** if it guessed differently from what the team intended.
+   and **what could go wrong** if it guessed differently from what the team intended. (Find at least 15 problems.)
 2. Classify each problem: ambiguity, incompleteness, inconsistency, untestability,
    design-in-requirements, or missing non-functional concern.
-3. Rewrite any two requirements so they are testable.
 
-Time: 25 minutes, in teams.
+Write the problems you identify in this format:
+
+```
+# Answer key: flawed spec critique (instructor only)
+
+| # | Problem | Category | What the agent must guess / risk |
+|---|---|---|---|
+| R1 | "use AI to understand..." | Ambiguity, untestable | No output defined, any behavior satisfies the requirement |
+```
+3. Make a list of requirements topics that are completely missing. (Find at least 3 problems.)
+
+Expected Time: 25 minutes.
 
 ---
 
