@@ -5,7 +5,7 @@ Shay Hahiashvili. This one repo holds every lab of the course.
 | Lab | Where | Based on |
 |---|---|---|
 | W1: issue triage (Exercise A) and review of an agent's change (Exercise B) | repo root (`src/triage`, `review-findings.md`, `improvement-log.md`) | [melhadad/llm-se-2027-w1-lab](https://github.com/melhadad/llm-se-2027-w1-lab) |
-| W2 | no lab (lecture only) | |
+| W2: lab preparation (OpenSpec install and flawed-spec critique) | `labs/w2/w2-lab-prep.md` | [melhadad/llm-se-2027 `W1/triage-spec-examples`](https://github.com/melhadad/llm-se-2027/tree/main/W1/triage-spec-examples) |
 | Later labs | `labs/wN/` | the instructor's repo for that lab |
 
 ## Staying in sync with the instructor
