@@ -113,17 +113,55 @@ iterating in small steps, where the conversation fills the gaps.
 
 ## Cycle 2
 
-**C1.** The error was: …………………… The change folder contained, but the main spec no longer
-contains: ……………………
+**C1.** The error was: `issue-routing/spec.md: ADDED "Routing Result" must include at least one
+scenario`. I fixed it by adding *"Scenario: Result has every field and names its rule"* (an
+enhancement routes to `product`, 168 h, no escalation, with a non-empty `reason`). Three
+warnings remain (two non-functional sections, one requirement over 500 characters), as
+expected.
 
-**C2.** Requirements in my delta:
+The change folder contained, but the main spec no longer contains:
+- `proposal.md`: the **why** (the motivation), and what is out of scope.
+- `design.md`: the technical decisions, the links to the ADRs, and the **open questions**
+  (e.g. critical bugs without repro steps).
+- `tasks.md`: the 22-task implementation checklist, which archive moved with 0/22 done.
+- The **"Non-functional requirements (informative)"** sections of both specs: type safety,
+  quality targets (macro-F1 ≥ 0.75), reproducibility, testability, exhaustiveness.
+
+Archive dropped them, as its warnings said. In addition, each main spec's **Purpose** is now
+the placeholder "TBD - created by archiving change add-issue-triage". The main specs keep
+only *what* the system must do (requirements and scenarios). The *why*, the *how* and the
+quality targets survive only in `openspec/changes/archive/2026-11-03-add-issue-triage/`.
+
+**C2.** Requirements in my delta (`openspec/changes/add-security-queue/`):
 
 | Capability | ADDED / MODIFIED | Requirement name |
 |---|---|---|
-| | | |
+| issue-routing | ADDED | Security Queue (security report → `security`, escalate, takes precedence over every other queue rule, also for a labelled `TriageFailure`) |
+| issue-routing | MODIFIED | SLA by Severity (a security report's SLA is capped at 24 h, so critical keeps 4 h) |
+| issue-routing | MODIFIED | Clarification Queue for Unreproducible Bugs (except security reports) |
+| issue-routing | MODIFIED | Escalation (adds rule 3: every security report escalates) |
+| issue-routing | MODIFIED | Enrichment Failures are Routed (only when `security_labelled = false`) |
+| issue-enrichment | ADDED | Security Report Detection (new model output `is_security_report`) |
+| issue-enrichment | MODIFIED | Enrichment Input Contract (accepts `labels`, never sent to the model, used only for `security_labelled`) |
+| issue-enrichment | MODIFIED | Triage Record Schema (adds `is_security_report` from the model and `security_labelled` from the input) |
+| issue-enrichment | MODIFIED | Bounded Retry and Explicit Failure (`TriageFailure` carries `security_labelled`) |
 
-**C3.** A problem `validate` caught: …………………… A problem in my change that it **cannot** catch:
-……………………
+**C3.** `openspec validate add-security-queue --strict` → *"Change 'add-security-queue' is
+valid"*, with 9 deltas (2 ADDED, 7 MODIFIED).
+
+A problem `validate` caught: when I deleted the scenario from the MODIFIED *"Enrichment
+Failures are Routed"*, it reported two errors: *"must include at least one scenario"* and
+*"omits scenario(s) the current spec still has: 'Failed enrichment'"*. A MODIFIED block
+replaces the whole requirement, so dropping a scenario would silently delete behaviour.
+
+A problem in my change that it **cannot** catch:
+- **Meaning and policy.** It can't tell whether "24h max" means a cap or a flat 24 h, whether a
+  *question* about security should count, or whether the label override contradicts the
+  other teams' in-flight changes. It checks structure, not correctness.
+- **Names (observed).** When I renamed a MODIFIED header to *"Escalation Rules"*, a
+  requirement that does not exist in the main spec, `validate` reported nothing.
+- **Scenario quality.** It only counts scenarios. It doesn't check that they are right, that
+  they cover the boundaries, or that the code passes them.
 
 ---
 
