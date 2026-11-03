@@ -30,7 +30,17 @@ Questions for the triage lead:
 
 ### Track B: user stories
 
-**B1.**
+**B1.** Rating against each INVEST letter (✓ good · ~ partly · ✗ weak):
+
+| Letter | US-06 Escalate what might be urgent | US-08 Hostile issue text is harmless |
+|---|---|---|
+| **I**ndependent | ✗ It depends on US-05 (does escalation apply inside `triage-clarify`?) and on enrichment producing a meaningful `confidence` | ~ It cuts across every story that reads issue text (US-01, US-02, US-07), but can be built as a separate safeguard |
+| **N**egotiable | ~ The 0.6 threshold and the "critical" rule are fixed in the criteria, but they could be renegotiated | ✓ It states a goal (text is only data) and leaves the mechanism open |
+| **V**aluable | ✓ Not missing an outage is clear value for the triage lead | ✓ Preventing command execution or hijacked routing is clear value |
+| **E**stimable | ✓ A small, well-understood rule | ~ "Steer routing" has no clear boundary, so the effort is hard to estimate |
+| **S**mall | ✓ Size S, three criteria | ~ Size M; it covers three security requirements (SR-01…03) |
+| **T**estable | ✓ It has exact boundary tests (0.6 vs below 0.6), but the *value* of the threshold can't be tested until confidence is calibrated | ✗ "Cannot steer routing" can't be proven by a finite set of tests, and "no process started" has no defined check |
+
 - **US-06: weakest letter is I (Independent).** It depends on US-05: does escalation still
   apply inside `triage-clarify`? The story doesn't say, and the README lists this exact
   interaction as an open question. It also depends on enrichment's `confidence` meaning
