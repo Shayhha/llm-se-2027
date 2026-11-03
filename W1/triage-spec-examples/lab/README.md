@@ -19,10 +19,18 @@ Write all your answers in [`worksheet.md`](worksheet.md), in your working copy.
    `brew install openspec` · `npm install -g @fission-ai/openspec@latest` (needs Node ≥ 22.12) ·
    `curl -fsSL https://openspec.dev/cli/install.sh | sh`.
    Check it with `openspec --version`.
-2. Make a working copy of the example and put it under git:
+2. Download the example folder from the course repository. A sparse clone fetches only this folder, not the whole repository:
 
    ```bash
-   cp -R triage-spec-examples ~/spec-lab
+   cd ~
+   git clone --depth 1 --filter=blob:none --sparse https://github.com/melhadad/llm-se-2027.git
+   git -C llm-se-2027 sparse-checkout set W1/triage-spec-examples
+   ```
+
+   Then make your own working copy, with its own git history, and set up OpenSpec in it:
+
+   ```bash
+   cp -R ~/llm-se-2027/W1/triage-spec-examples ~/spec-lab
    cd ~/spec-lab
    git init -q && git add -A && git commit -qm "baseline"
    openspec init --tools none        # or: --tools claude / codex / cursor / github-copilot
@@ -111,10 +119,7 @@ Two other teams have changes in flight against the same specs:
 
 ## Further reading
 
-- OpenSpec docs: <https://openspec.dev/docs>, especially *Concepts* (specs vs changes, delta
-  operations).
-- ISO/IEC/IEEE 29148:2018 §5.2.5–5.2.6 (characteristics of individual requirements and of sets
-  of requirements).
+- OpenSpec docs: <https://openspec.dev/docs/glossary>
+- ISO/IEC/IEEE 29148:2018 §5.2.5–5.2.6 (characteristics of individual requirements and of sets of requirements).
 - B. Wake, *INVEST in Good Stories, and SMART Tasks* (2003).
-- E. Evans, *Domain-Driven Design* (2003), ch. 2 *Communication and the Use of Language*. This
-  is the starting point for W4.
+- E. Evans, *Domain-Driven Design* (2003), ch. 2 *Communication and the Use of Language*.
