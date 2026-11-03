@@ -1,6 +1,9 @@
-# Spec delta: issue-routing
+# issue-routing Specification
 
-## ADDED Requirements
+## Purpose
+TBD - created by archiving change add-issue-triage. Update Purpose after archive.
+
+## Requirements
 
 ### Requirement: Deterministic Routing
 Routing SHALL be a pure function of a validated `TriageRecord`. It SHALL NOT call a model,
@@ -15,6 +18,12 @@ routing tables below. Equal inputs SHALL produce equal outputs.
 ### Requirement: Routing Result
 Routing SHALL produce a `Routing` value with fields `queue` (string), `sla_hours` (positive
 integer), `escalate` (boolean) and `reason` (non-empty string naming the rule applied).
+
+#### Scenario: Result has every field and names its rule
+- **GIVEN** a record with `issue_type = enhancement`, `severity = low`, `confidence = 0.9`
+- **WHEN** routing runs
+- **THEN** the result has `queue = product`, `sla_hours = 168`, `escalate = false`
+- **AND** `reason` is a non-empty string naming the queue-by-type rule
 
 ### Requirement: Queue by Issue Type
 Unless another requirement in this spec overrides it, the queue SHALL be determined by
@@ -97,11 +106,3 @@ A `TriageFailure` (see `issue-enrichment`) SHALL be routed to queue `triage-manu
 - **GIVEN** a `TriageFailure` for issue `#88`
 - **WHEN** routing runs
 - **THEN** `queue = triage-manual`
-
-## Non-functional requirements (informative)
-
-- **Testability:** every row of every table and every scenario above SHALL have a unit test.
-  Routing is correct or incorrect — it has no accuracy metric.
-- **Exhaustiveness:** adding a value to `IssueType` or `Severity` without a corresponding table
-  entry SHALL be a type error (enforced via `dict[IssueType, str]` with pyright exhaustiveness
-  checks or `assert_never`).
