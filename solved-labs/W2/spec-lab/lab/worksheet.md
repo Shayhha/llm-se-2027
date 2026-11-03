@@ -93,8 +93,6 @@ and the `reason` field), **US-08** (prompt injection can now flip the security f
 
 ### Regroup: compare with your partner from the other track
 
-*(Fill in the right-hand column after talking to your Track A partner. The left column is mine.)*
-
 | My format made explicit… | My partner's format made explicit… |
 |---|---|
 | **Who** benefits and **why** (role + benefit): the security reviewer, "never left in a public queue" | |
