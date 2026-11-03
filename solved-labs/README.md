@@ -5,11 +5,53 @@ This repository is a fork of the course repository
 `solved-labs/` is the instructor's material, unchanged, and is updated from upstream. All my
 lab work lives here, one folder per week.
 
-| Week | Folder | Contents |
-|---|---|---|
-| W1 | [`W1/`](W1/) | The W1 lab ([melhadad/llm-se-2027-w1-lab](https://github.com/melhadad/llm-se-2027-w1-lab)): environment setup, Exercise A (`src/triage`, tests, `runs/`, `review-findings.md`, `improvement-log.md`, `docs/decisions.md`) and Exercise B (review findings, reading and running) |
-| W2 | [`W2/lab-prep/`](W2/lab-prep/) | W2 lab preparation: `openspec --version` and the flawed-spec critique |
-| W2 | [`W2/spec-lab/`](W2/spec-lab/) | W2 in-class specifications lab: cycle 1 track B (user stories for CR-1), cycle 2 (OpenSpec: archive `add-issue-triage`, new change `add-security-queue`), answers in `lab/worksheet.md` |
+## Repository map
+
+### The instructor's material (unchanged)
+
+| Path | What it is |
+|---|---|
+| `syllabus-software-engineering-with-ai.md` | The syllabus: weekly topics, labs, readings, grading, project milestones |
+| `intro.md` | Lecture notes for the course introduction: GenAI for programming, trust |
+| `W1/triage-spec-examples/` | The triage feature written in every spec style: OpenSpec change, SRS (29148), user stories, ADRs, the flawed-spec exercise, and the W2 lab handout (`lab/`) |
+| `LLMs/` | Lecture notes on LLM fundamentals: tokenization, transformers, decoding, training, prompting, RAG (from W3) |
+| `LLM_Prompting/` | Lecture notes on prompt engineering |
+| `dspy/` | DSPy demos and notebooks (a separate uv project) |
+| `project/` | Notes for the course project: OpenSpec workflow, Spec-Kit, PRDs, monorepo |
+| `media/` | Images used by the notes |
+
+### My work: `solved-labs/`
+
+| Path | What it is |
+|---|---|
+| [`study-notes/`](study-notes/) | My study notes for the quizzes: [`reading-w1-w2.md`](study-notes/reading-w1-w2.md) (all W1–W2 material, explained) and [`quiz-prep-w1-w2.md`](study-notes/quiz-prep-w1-w2.md) (summary + 35 practice questions with answers) |
+| [`W1/`](W1/) | The W1 lab ([melhadad/llm-se-2027-w1-lab](https://github.com/melhadad/llm-se-2027-w1-lab)). **Start with [`W1/TAKEAWAYS.md`](W1/TAKEAWAYS.md).** |
+| [`W2/`](W2/) | The W2 lab preparation and the in-class specifications lab. **Start with [`W2/TAKEAWAYS.md`](W2/TAKEAWAYS.md).** |
+
+### Inside `W1/`
+
+| Path | What it is |
+|---|---|
+| `src/triage/` | **Exercise A, my implementation**: `schema.py` (the `TriageRecord` contract), `extract.py` (the DSPy call, validation, retry), `cli.py` |
+| `tests/triage/` | Exercise A tests (stub LM: valid, invalid-then-valid, invalid twice, hostile title) |
+| `runs/` | Output of two 20-issue runs on the dev split |
+| `docs/decisions.md` | Every decision taken while building Exercise A, one line each |
+| `review-findings.md` | Exercise A surprises, and **Exercise B** review findings (reading vs running, scoring) |
+| `improvement-log.md` | Every agent mistake, classified (`capability`/`context`/`tool`/`spec`/`concept`/`bug`) |
+| `src/triage_by_agent/`, `exercise-b/`, `tests/exercise_b/` | **Exercise B** material as released: the reference implementation, the agent's diff and its tests |
+| `LAB.md`, `README.md`, `tools/`, `config/`, `data/snapshot/` | The instructor's lab handout, setup tools and the frozen issue dataset (`test.json` is sealed until W6) |
+
+### Inside `W2/`
+
+| Path | What it is |
+|---|---|
+| `lab-prep/w2-lab-prep.md` | The Moodle submission: `openspec --version` and the flawed-spec critique (22 problems + missing topics) |
+| `spec-lab/lab/worksheet.md` | **All lab answers**: cycle 1 (INVEST, agent test), cycle 2 (OpenSpec), cycle 3 (routing table, glossary, invariants) |
+| `spec-lab/docs/user-stories.md` | Cycle 1: CR-1 written as US-10–US-12, with 5 existing stories updated |
+| `spec-lab/openspec/specs/` | Cycle 2: the main specs after archiving `add-issue-triage` |
+| `spec-lab/openspec/changes/add-security-queue/` | Cycle 2: my OpenSpec change for CR-1 (proposal + two spec deltas). It validates. |
+| `spec-lab/openspec/changes/add-priority-score/`, `add-component-owners/` | Cycle 3: the other teams' in-flight changes (from `lab/in-flight/`) |
+| `spec-lab/lab/`, `docs/`, `README.md` (the rest) | The instructor's example folder that the lab works on |
 
 The commit history of each lab was imported with `git subtree`, so the original commits and
 their dates are preserved.
