@@ -178,12 +178,42 @@ A problem in my change that it **cannot** catch:
 
 | | `queue` | `sla_hours` | `escalate` | Requirement(s) that decide it | **?** and why |
 |---|---|---|---|---|---|
-| R1 | | | | | |
-| R2 | | | | | |
-| R3 | | | | | |
-| R4 | | | | | |
+D1: after `cp -R lab/in-flight/* openspec/changes/`, `openspec validate --changes --strict`
+gives **3 passed, 0 failed**. Every change is valid on its own and all three are valid
+together, yet they contradict each other (below). `validate` checks each delta against the
+current main spec, never one change against another.
 
-Other contradictions I found while reading the deltas: ……………………
+| | `queue` | `sla_hours` | `escalate` | Requirement(s) that decide it | **?** and why |
+|---|---|---|---|---|---|
+| R1 | **?** `security` or `eng-core` | 4 | true | Queue: *Security Queue* (mine) vs *Queue by Issue Type* (component-owners). SLA: *SLA by Severity*: critical → P1 → 4 (priority version) and critical security → 4 (my version). Escalate: *Escalation* rules 1 and 3 | **Queue ?** My *Security Queue* claims precedence over every queue rule. But component-owners' MODIFIED *Queue by Issue Type* **dropped** the clause "Unless another requirement in this spec overrides it" and now says a bug's queue "SHALL" be `eng-<team>`. Both are SHALL, so they contradict. The archive order decides, and a vulnerability could land in the *public* `eng-core` queue, which is exactly the CR-1 incident. SLA and escalate agree whichever version wins. |
+| R2 | `support` | **?** 24 or 4 | true | Queue: *Queue by Issue Type*. SLA: *SLA by Severity* (priority version: high + < 10 👍 → P2 → 24 h; high + ≥ 10 👍 → P1 → 4 h). Escalate: *Escalation* rule 2 (high, 0.55 < 0.6) | **SLA ?** It depends on **when** routing runs: 24 h at first triage (8 👍), 4 h today (40 👍). This breaks *Deterministic Routing* ("no I/O, equal inputs → equal outputs"): 👍 is not in the `TriageRecord`, and priority's task 1.1 fetches it inside `route()`. If my version of *SLA by Severity* is archived last, the answer is 24 regardless. |
+| R3 | **?** `engineering` (literally) or `eng-core` (intended) | 24 | false | Queue: *Component Ownership* + *Queue by Issue Type* (owners). SLA: high + 2 👍 → P2 → 24 (also 24 by severity). Escalate: *Escalation* (high, 0.8 ≥ 0.6) | **Queue ?** The model wrote `"Routing"`, but `owners.toml` has `router`. The spec doesn't say whether lookup is exact, case-insensitive, or normalised to a vocabulary. Read literally it's unowned → `engineering`, so the bug misses the team that owns it. `component` is free text in *Triage Record Schema*. |
+| R4 | `security` (if the label is present when triage runs), else `triage-manual` **?** | **?** 24, 72 or undefined | **?** true or false | *Security Queue* + *Enrichment Failures are Routed* (mine): a labelled failure → `security`, 24 h, escalate. Without the label: `triage-manual`, 72 h, false. Priority: *Issue Priority* needs a `severity`, and a `TriageFailure` has none | **? (several).** (1) **When** was the label added: before triage, or after? If after, triage never saw it, and nothing re-routes. (2) The priority version of *SLA by Severity* computes the SLA from priority, but a failure has no severity, so it has no priority and no SLA. It also conflicts with the fixed 72 h of *Enrichment Failures are Routed*. (3) 50 👍 would make it P1 if priority applied. |
+
+Other contradictions I found while reading the deltas:
+- **Two changes MODIFY the same requirement, *SLA by Severity*** (priority and mine), and a
+  MODIFIED block replaces the whole requirement. *Tested in a scratch copy*, archiving in the
+  order security → owners → priority: `openspec archive add-priority-score` was **refused**,
+  because its block would drop my two security scenarios ("Refresh the change spec before
+  archiving"). So archive protects *scenarios*. It does not protect *text*. If the scenarios
+  had matched, the last change archived would have won.
+- **Component-owners removes the override clause** "Unless another requirement in this spec
+  overrides it" from *Queue by Issue Type*. *Security Queue*, *Clarification Queue* and
+  *Enrichment Failures are Routed* all depend on it. In the same test, **this archived with no
+  error or warning**. The combined spec now contains both "security takes precedence" and "a
+  bug's queue SHALL be `eng-<team>`", a contradiction no tool reported.
+- **The requirement name lies.** After the priority change, "SLA by **Severity**" computes the
+  SLA from priority.
+- **"Critical" now means two things.** It means `severity = critical` in *Escalation*, but the
+  priority change shows every **P1** as a "critical issue" on the dashboard, and P1 includes
+  *high* severity issues with ≥ 10 👍. A "critical issue" on the dashboard may therefore not be
+  escalated.
+- **Reactions are forbidden input.** *Enrichment Input Contract* says reactions SHALL NOT be
+  used, and the priority change makes them decide the deadline.
+- **`component = null`** (owners task 2.3) and `"unknown"` are not covered by *Component
+  Ownership*, which only defines lookups for named components.
+- **No change knows about the others.** Each scenario was written against today's main spec,
+  so all of them pass, and none of them test the combination.
 
 ### D3: domain model
 
@@ -192,27 +222,39 @@ another meaning (which document or change).
 
 | Term | Definition | Used differently in… |
 |---|---|---|
-| issue | | |
-| triage record | | |
-| component | | |
-| queue | | |
-| team / owner | | |
-| severity | | |
-| priority | | |
-| critical | | |
-| SLA | | |
-| escalate | | |
-| security issue | | |
+| issue | A GitHub issue at the moment it is triaged: `repo`, `issue_number`, `title`, `body`, and the labels present at that moment. | Priority change: an issue whose 👍 count keeps changing *after* triage. R4: labels added later. |
+| triage record | The immutable, validated result of enriching one issue: `TriageRecord` on success, `TriageFailure` on failure. It is the **only** input to routing. | Priority change: routing also reads 👍 from GitHub, outside the record. |
+| component | The affected subsystem, a value from a **per-repo controlled vocabulary**, or `null`. | Enrichment: free text from the model (`"Routing"`). Component-owners: a key in `owners.toml` (`router`). |
+| queue | The single destination a routing decision sends an issue to. Exactly one per issue. | Security Queue vs component-owners: two rules each assign "the" queue. `security` is also *private*, which is an access property, not a routing one. |
+| team / owner | The one team responsible for a component in a repo, from `owners.toml`. | The original spec's "queue" is per *type* (`engineering`). The owners change makes it per *team* (`eng-core`). Two meanings of "who handles it". |
+| severity | How bad the technical impact is (low…critical), judged by the model from the text **at triage time**. Never changes afterwards. | Priority change: SLA no longer comes from severity, but the requirement is still named "SLA by Severity". |
+| priority | How urgent the response is (P1…P4), derived **deterministically** from fields in the triage record. | Priority change: computed from live 👍, so it is not stable. Exercise B: `ticket_priority` was used as a *synonym* of severity. |
+| critical | Only `severity = critical`. | Priority change: "critical issues" on the dashboard = P1, which includes high-severity issues with ≥ 10 👍. |
+| SLA | The maximum hours to first response, fixed when the issue is routed. | Priority change: from priority. Mine: from severity, capped at 24 for security. Failure: a flat 72. Three different sources. |
+| escalate | Flag the issue to a human on-call **now**, independent of the queue. | CR-1 says "flagged to a human straight away". It could mean `escalate`, or a separate notification. The dashboard's "critical" heading suggests an escalation that doesn't happen. |
+| security issue | An issue reporting a vulnerability: the model says `is_security_report = true`, **or** the issue carries the `security` label when triaged. | Enrichment Input Contract: "labels SHALL NOT be used". R4: a label added after triage. |
 
 **Invariants.** Rules that must hold *for every* issue, whatever feature is added later.
 
 | # | Invariant ("for every …, …") | Catches problem(s)… |
 |---|---|---|
-| I1 | | |
-| I2 | | |
-| I3 | | |
-| I4 | | |
-| I5 | | |
+| I1 | For every routing decision, the result is a pure function of the triage record and versioned static config (no clock, no network, no live GitHub data). Routing the same record twice gives the same result. | R2 (👍 at routing time); priority task 1.1 (fetch in `route()`) |
+| I2 | For every issue, exactly **one** queue is chosen, by a **single ordered precedence list** kept in one place: `security` > `triage-manual` > `triage-clarify` > owner/type. A change that adds a queue rule must insert it into that list, not restate "the queue SHALL be…". | R1 (security vs `eng-core`); owners dropping the "unless overridden" clause; R4 (security vs `triage-manual`) |
+| I3 | For every security issue, `queue = security`, `escalate = true` and `sla_hours ≤ 24`, whatever other features apply. | R1, R4; the priority change overwriting the security SLA cap |
+| I4 | For every `TriageRecord`, `component` is `null` or a member of the repo's component vocabulary, and that vocabulary is the same key set used by `owners.toml`. | R3 (`"Routing"` vs `router`); `null` / `"unknown"` not covered |
+| I5 | For every issue (including a `TriageFailure`), `sla_hours` is defined, and no rule may make it **longer** than the SLA its severity alone gives. Features may only shorten deadlines. | R4 (no priority, no SLA); conflicting SLA sources |
+| I6 | For every term in the glossary there is one meaning, and every input field a requirement reads is listed in the *Enrichment Input Contract*. | "critical" = P1 on the dashboard; reactions and labels used although the contract forbids them; "SLA by Severity" that isn't by severity |
 
 Where would you put this so that (a) the next `/opsx:propose` reads it and (b) something
-**checks** it automatically? ……………………
+**checks** it automatically?
+- **(a)** In `openspec/config.yaml` under `context:` (the glossary plus the invariants, which
+  OpenSpec injects into every proposal and spec it generates), **and** as a capability
+  `openspec/specs/domain-model/spec.md`, with each invariant as a *Requirement* with
+  scenarios. A new change then has to MODIFY the invariant explicitly to break it, which
+  is visible in review, instead of overwriting another team's requirement by accident.
+- **(b)** As **property-based tests** in CI (e.g. Hypothesis over generated `TriageRecord`s,
+  `TriageFailure`s and label sets) that assert I1–I5 against the real `route()`. Add a typed
+  `Component`/`Queue` vocabulary (`Literal` types, checked by pyright strict) for I4 and I6,
+  and a CI step that **archives all open changes into a scratch copy** and runs
+  `openspec validate --specs --strict` plus the tests on the combined result. Per-change
+  validation can't see the conflicts.
