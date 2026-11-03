@@ -1,6 +1,6 @@
 # Solved labs: Shay Hahiashvili
 
-This repository is a copy of the course repository
+This repository is a fork of the course repository
 [melhadad/llm-se-2027](https://github.com/melhadad/llm-se-2027). Everything outside
 `solved-labs/` is the instructor's material, unchanged, and is updated from upstream. All my
 lab work lives here, one folder per week.
@@ -23,9 +23,14 @@ their dates are preserved.
 
 ## Staying in sync with the instructor
 
+When the instructor adds new material, pull it in, then push it to the fork:
+
 ```
 git pull upstream main        # upstream = melhadad/llm-se-2027
+git push origin main          # origin   = Shayhha/llm-se-2027 (this fork)
 ```
+
+(Or use **Sync fork** on the GitHub page, then `git pull origin main`.)
 
 If the instructor updates the separate W1 lab repository:
 
