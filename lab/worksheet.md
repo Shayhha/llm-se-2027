@@ -1,6 +1,6 @@
 # Worksheet: specifications lab
 
-Name: ……………………  Track (cycle 1): **A (SRS)** / **B (stories)**
+Name: Shay Hahiashvili  Track (cycle 1): **B (stories)**
 
 ---
 
@@ -30,23 +30,74 @@ Questions for the triage lead:
 
 ### Track B: user stories
 
-**B1.** Weakest INVEST letter for US-06: … because … · for US-08: … because …
+**B1.**
+- **US-06: weakest letter is I (Independent).** It depends on US-05: does escalation still
+  apply inside `triage-clarify`? The story doesn't say, and the README lists this exact
+  interaction as an open question. It also depends on enrichment's `confidence` meaning
+  something: the 0.6 threshold is only valuable if confidence is calibrated, which no story
+  guarantees.
+- **US-08: weakest letter is T (Testable).** "Cannot steer routing" can't be proven by a
+  finite set of tests. Its criteria check two examples, but there is no oracle for "the
+  injected text had no effect" on the values the model chose. "No process is started" doesn't
+  say what it is checked against. It is also borderline **S**: it covers three security
+  requirements (SR-01…03).
+
+**B2.** Written in `docs/user-stories.md`. CR-1 is too big for one story (it fails S), so it is
+split into **US-10** (routing to the private `security` queue, escalate, SLA ≤ 24 h),
+**US-11** (the model detects security reports from the text) and **US-12** (an existing
+`security` label counts). Existing stories updated because CR-1 made their criteria false:
+**US-01** (labels are never used, except now `security`), **US-03** (a failure goes to
+`triage-manual`, except a labelled security issue), **US-04** (bug → `engineering`, except
+security), **US-05** (no repro → clarify, except security) and **US-06** (security always
+escalates).
 
 **B3.** What a coding agent would still have to guess:
 
-1.
-2.
-3.
+1. **How the model signals "security".** A new boolean `is_security_report`, a new
+   `issue_type = security`, or a new severity? Each changes the schema, the enum and the eval
+   differently. I chose a boolean, but CR-1 doesn't say.
+2. **The SLA rule.** "Within 24h max" could mean a flat 24 h, or min(severity SLA, 24 h).
+   Does a critical security issue keep 4 h? I chose the min, but that's a guess.
+3. **Precedence** when several rules apply: security vs `triage-clarify`, vs `triage-manual`
+   for a failed enrichment, and vs any later queue override, such as the component-owner queues.
+4. **Where the label comes from.** The input contract (US-01, FR-E-01) only keeps title and
+   body, so labels are dropped before routing. The agent must decide how labels reach the
+   router, and match them exactly: `security`? `Security`? `security-vulnerability`?
+5. **What "flagged to a human straight away" means.** Is it the existing `escalate = true`, or
+   a new notification (email/pager)? Is there a time bound for "straight away"?
+6. **What "private" means.** Triage can only choose a queue name; who can see the queue is
+   decided outside the system. And the issue is *already public* on GitHub: should triage
+   also hide or lock it? Out of scope, or not?
+7. **The detection threshold and quality target.** How sure must the model be? What recall or
+   false-positive rate is acceptable? Without a target, US-11 can't be accepted.
+8. **Injection in both directions.** An attacker can write "this is a security issue" to jump
+   the queue, or a real report can be worded to look harmless. Is either case acceptable?
+9. **Which issue types count.** A *question* about security ("is CSRF protection on by
+   default?") is not a vulnerability report. Does it go to `security`?
 
-Existing stories that interact with yours: ……………………
+Existing stories that interact with yours: **US-01** (labels in the input contract),
+**US-02** (validating the new field), **US-03** (failure routing), **US-04** (type-based
+queue), **US-05** (clarify override), **US-06** (escalation), **US-07** (deterministic rules
+and the `reason` field), **US-08** (prompt injection can now flip the security flag),
+**US-09** (the evaluation needs security gold labels and a recall target).
 
 ### Regroup: compare with your partner from the other track
 
+*(Fill in the right-hand column after talking to your Track A partner. The left column is mine.)*
+
 | My format made explicit… | My partner's format made explicit… |
 |---|---|
-| | |
+| **Who** benefits and **why** (role + benefit): the security reviewer, "never left in a public queue" | |
+| **Concrete examples** as Given/When/Then: a critical security issue keeps 4 h, a low one gets 24 h | |
+| **How big** the change really is: it had to be split into 3 stories, and 5 existing stories changed | |
+| **Interactions** with existing behaviour, through criteria that CR-1 made false | |
 
-I would choose an SRS when …………………… and user stories when ……………………
+I would choose an SRS when the system needs **auditability and complete coverage**: numbered
+requirements, each with a verification method and a priority, a traceability matrix, and
+definitions in one place. Examples are safety or security requirements, contracts, or a spec
+an agent must implement without asking questions. I would choose user stories when
+**discussing value and scope with stakeholders**, splitting and prioritising work, and
+iterating in small steps, where the conversation fills the gaps.
 
 ---
 
