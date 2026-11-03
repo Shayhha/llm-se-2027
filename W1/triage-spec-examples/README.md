@@ -26,6 +26,7 @@ deterministically to a queue with an SLA and an escalation flag. Issue text is u
 | `docs/adr/0001-…` – `0005-…` | Architecture Decision Records (Nygard/MADR) | Recording *why* |
 | `exercises/flawed-spec.md` | Deliberately weak spec + stories | Critique exercise (student handout) |
 | `exercises/flawed-spec-key.md` | Answer key | Instructor only |
+| `lab/` | Hands-on lab (1 h 40): SRS vs stories, OpenSpec workflow, composing changes | Student handout + worksheet |
 
 ## Suggested discussion thread
 
