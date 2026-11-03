@@ -1,0 +1,20 @@
+{"repo":"hono","number":3891,"issue_type":"bug","component":"netlify adapter","severity":"medium","has_reproduction_steps":true,"confidence":0.95,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4020,"issue_type":"enhancement","component":"context","severity":"low","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4121,"issue_type":"question","component":"documentation","severity":"low","has_reproduction_steps":false,"confidence":0.95,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4275,"issue_type":"bug","component":"vercel","severity":"medium","has_reproduction_steps":true,"confidence":0.95,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4426,"issue_type":"bug","component":"types","severity":"high","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4622,"issue_type":"enhancement","component":"jsx","severity":"low","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"hono","number":4999,"issue_type":"enhancement","component":"router","severity":"low","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":3782,"issue_type":"bug","component":"database","severity":"medium","has_reproduction_steps":true,"confidence":0.9,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":3964,"issue_type":"enhancement","component":"marshmallow","severity":"low","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":4117,"issue_type":"bug","component":"sqlalchemy plugin","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":4304,"issue_type":"enhancement","component":"jwt","severity":"medium","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":4473,"issue_type":"enhancement","component":"encoding","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":4599,"issue_type":"bug","component":"dto","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"litestar","number":4947,"issue_type":"enhancement","component":"ci","severity":"low","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":5507,"issue_type":"question","component":"widgets","severity":"low","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":5605,"issue_type":"bug","component":"focus","severity":"medium","has_reproduction_steps":true,"confidence":0.95,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":5794,"issue_type":"bug","component":"optionlist","severity":"medium","has_reproduction_steps":false,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":6011,"issue_type":"bug","component":"textarea","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":6242,"issue_type":"bug","component":"input","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
+{"repo":"textual","number":6445,"issue_type":"bug","component":"domquery","severity":"medium","has_reproduction_steps":true,"confidence":1.0,"model":"gemini/gemini-3.5-flash-lite"}
