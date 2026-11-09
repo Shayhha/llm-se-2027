@@ -8,6 +8,15 @@ conceptual questions. Practice questions with answers are at the end.
 
 # Part A: lecture, Foundation Models basics (slides 1–27)
 
+## 0. The lecture's objectives (slides 1–3)
+Part 4 of the course, **"Foundation Models – Basics"**: FMs are the engines of modern AI
+applications, pre-trained assistants that can adapt to many tasks. The lecture asks:
+1. What are foundation models?
+2. How are they built?
+3. Why do they matter?
+4. What are their costs, opportunities and risks?
+5. How are they expected to evolve?
+
 ## 1. What AI is, and why now (slides 2–4)
 - **AI:** a machine performing cognitive functions we associate with human minds: perceiving,
   reasoning, learning, interacting with the environment, problem solving, creativity.
@@ -22,6 +31,7 @@ conceptual questions. Practice questions with answers are at the end.
 
 | | Classical software engineering | Machine learning |
 |---|---|---|
+| Parts of the system | **algorithm**, **data model**, **input/output**, **user interface** (slide 6) | **features**, a **dataset**, a generic learning algorithm, a trained **model** (slides 8–9) |
 | How it's built | a domain expert and a product manager design a **deterministic algorithm**; you write the data model and logic | a **generic learning algorithm** learns a **model** from a **dataset** of examples (features → price) |
 | Input → output | data model → algorithm → output | **features** → model → prediction |
 | Behaviour | deterministic: same input → same output | **probabilistic** |
@@ -76,6 +86,8 @@ ML wins were ad placement, recommendation, attention-grabbing feeds and machine 
   representation** → model.
 
 **From next-word prediction to multi-task models (slides 17–18):**
+- Source: Sanh et al., *Multitask Prompted Training Enables Zero-Shot Task Generalization*
+  (ICLR 2022, the **T0** model).
 - Format **many tasks as text-to-text** transformations (a *prompt* describes the task) and
   train on that uniform format.
 - The model then **generalizes to new task descriptions it never saw**. This is **zero-shot
@@ -108,6 +120,13 @@ post-training by instruction fine-tuning and preference alignment with RL.
 
 ## 4. Using foundation models (slides 22–27)
 
+**Three usage patterns (slide 22):**
+1. **Prompting:** use the model as is, with instructions and examples in the prompt.
+2. **Fine-tuning:** train it further on your own data.
+3. **Reinforcement learning:** shape its behaviour with rewards or preferences.
+
+Slides 1–27 go into prompting. Fine-tuning starts at slide 29, outside this quiz.
+
 **Types (slide 23):**
 
 | Type | Use |
@@ -120,15 +139,15 @@ post-training by instruction fine-tuning and preference alignment with RL.
 | **Biological models** | trained on protein sequences |
 
 - **Proprietary services:** ChatGPT, Claude, Grok, Gemini.
-- **Open-access models:** Llama, DeepSeek, Mistral, Qwen.
+- **Open-access models:** Llama (Meta), DeepSeek, Mistral, Qwen (Alibaba), Muse.
 
 **Selecting a model (slide 24):**
-- **Performance:** leaderboards (LM Arena Elo score, Scale), and **system-level benchmarks**
-  for programs made of several LLMs.
+- **Performance:** leaderboards (LM Arena Elo score, Scale). Beyond one model, **system
+  performance**: a *holistic benchmark* evaluates modular programs made of several LLMs.
 - **Cost:**
   - *proprietary:* usage tier, licence, **price per input/output token**, latency;
   - *open:* run it in-house (privacy, but complex infrastructure) or through managed cloud
-    services.
+    services (e.g. Nebius, OpenRouter).
 
 **Prompting basics (slides 25–26):**
 - The LLM **predicts** the best answer to what you ask.
@@ -160,6 +179,16 @@ post-training by instruction fine-tuning and preference alignment with RL.
 
 Full notes: [`../W2/PRACTICE.md`](../W2/PRACTICE.md) · summary:
 [`../W2/TAKEAWAYS.md`](../W2/TAKEAWAYS.md)
+
+**The lab preparation:** install OpenSpec and critique a deliberately weak spec. For each
+problem, say what a coding agent would have to **guess** and what goes wrong. The categories
+were:
+- **ambiguity** ("the right category", "important issues");
+- **incompleteness** (no schema, no SLA values);
+- **inconsistency** (two rules for the same issue);
+- **untestability** ("accurately", "fast and secure");
+- **design-in-requirements** ("use GPT-4 with temperature 0 and a regex parser");
+- **missing non-functional concern** (no security or latency target).
 
 **The input:** change request **CR-1**: send security reports to a private queue, escalate them,
 handle within 24 h, detect them with the model, and an existing `security` label counts. It
