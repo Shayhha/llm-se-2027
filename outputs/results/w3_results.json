@@ -1,0 +1,1433 @@
+{
+  "model": "gemini/gemini-3.5-flash-lite",
+  "parts": {
+    "2 zero-shot": {
+      "issues_run": 20,
+      "issues_scored": 7,
+      "type_accuracy": 1.0,
+      "valid_rate": 1.0,
+      "lm_calls": 20,
+      "cost_usd": 0.00844,
+      "issues": [
+        {
+          "repo": "hono",
+          "number": 3891,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/adapter/netlify"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3908,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3926,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "src/helper/proxy"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3935,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3962,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "src/bun"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3969,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/websocket.ts",
+              "src/helper/websocket"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3976,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/client"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3979,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/middleware/cors/index.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3987,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/middleware/basic-auth"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3988,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3994,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4017,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/stream.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4020,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4024,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/aws-lambda"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4032,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4033,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4041,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/node-server"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4058,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "src/utils/test-client.ts",
+              "src/helper/testing"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4062,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/validator"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4065,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/helper/testing"
+            ]
+          },
+          "error": null
+        }
+      ]
+    },
+    "3 one-shot": {
+      "issues_run": 20,
+      "issues_scored": 7,
+      "type_accuracy": 1.0,
+      "valid_rate": 1.0,
+      "lm_calls": 20,
+      "cost_usd": 0.01022,
+      "issues": [
+        {
+          "repo": "hono",
+          "number": 3891,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/adapter/netlify"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3908,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3926,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/helper/proxy"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3935,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3962,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "src/bun"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3969,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/websocket.ts",
+              "src/adapter"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3976,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/client"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3979,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/middleware/cors/index.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3987,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/helper/basic-auth"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3988,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3994,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4017,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/stream.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4020,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4024,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/aws-lambda"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4032,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4033,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4041,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/node-http"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4058,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/test-client.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4062,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/validator/validator.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4065,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/helper/testing",
+              "src/utils"
+            ]
+          },
+          "error": null
+        }
+      ]
+    },
+    "4 context": {
+      "issues_run": 20,
+      "issues_scored": 7,
+      "type_accuracy": 1.0,
+      "valid_rate": 1.0,
+      "lm_calls": 20,
+      "cost_usd": 0.01274,
+      "issues": [
+        {
+          "repo": "hono",
+          "number": 3891,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "adapter/netlify/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3908,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3926,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "helper/proxy/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3935,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "adapter/deno/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3962,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "adapter/bun/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3969,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "helper/websocket/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3976,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "client/",
+              "client/client.ts",
+              "client/types.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3979,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "middleware/cors/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3987,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "middleware/basic-auth/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3988,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "context.ts",
+              "index.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3994,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4017,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "utils/stream.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4020,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "context.ts",
+              "hono-base.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4024,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "adapter/aws-lambda/",
+              "adapter/lambda-edge/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4032,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "hono.ts",
+              "hono-base.ts",
+              "types.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4033,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "adapter/cloudflare-workers/",
+              "adapter/cloudflare-pages/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4041,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "adapter/",
+              "helper/streaming/",
+              "utils/stream.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4058,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "client/",
+              "client/client.ts",
+              "helper/testing/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4062,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "validator/",
+              "validator/validator.ts",
+              "request.ts",
+              "utils/body.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4065,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "helper/testing/",
+              "client/"
+            ]
+          },
+          "error": null
+        }
+      ]
+    },
+    "5 two-step": {
+      "issues_run": 20,
+      "issues_scored": 7,
+      "type_accuracy": 1.0,
+      "valid_rate": 1.0,
+      "lm_calls": 38,
+      "cost_usd": 0.01023,
+      "issues": [
+        {
+          "repo": "hono",
+          "number": 3891,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "adapter/netlify/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3908,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3926,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "helper/proxy/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3935,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "adapter/deno/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3962,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "adapter/",
+              "adapter/bun/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3969,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3976,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "client/",
+              "client/client.ts",
+              "client/types.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3979,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3987,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3988,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3994,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4017,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4020,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4024,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4032,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "hono.ts",
+              "hono-base.ts",
+              "types.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4033,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4041,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4058,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "client/",
+              "client/client.ts",
+              "helper/testing/",
+              "helper/cookie/"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4062,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4065,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": [
+              "helper/testing/"
+            ]
+          },
+          "error": null
+        }
+      ]
+    },
+    "7 optimized": {
+      "issues_run": 20,
+      "issues_scored": 7,
+      "type_accuracy": 1.0,
+      "valid_rate": 1.0,
+      "lm_calls": 20,
+      "cost_usd": 0.01494,
+      "issues": [
+        {
+          "repo": "hono",
+          "number": 3891,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/adapter/netlify"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3908,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3926,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/helper/proxy"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3935,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "low",
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3962,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "medium",
+            "priority": null,
+            "component": [
+              "src/adapter/bun"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3969,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/helper/websocket",
+              "src/utils/websocket.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3976,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/client"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3979,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/middleware/cors"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3987,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/middleware/basic-auth"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3988,
+          "gold_type": null,
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 3994,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4017,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/utils/stream.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4020,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "low",
+            "component": [
+              "src/context.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4024,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/aws-lambda"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4032,
+          "gold_type": null,
+          "record": {
+            "issue_type": "bug",
+            "severity": "high",
+            "priority": null,
+            "component": [
+              "src/hono.ts",
+              "src/types.ts"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4033,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": []
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4041,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "medium",
+            "component": [
+              "src/adapter/node"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4058,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/utils",
+              "src/client"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4062,
+          "gold_type": "enhancement",
+          "record": {
+            "issue_type": "enhancement",
+            "severity": null,
+            "priority": "high",
+            "component": [
+              "src/validator",
+              "src/helper/validator"
+            ]
+          },
+          "error": null
+        },
+        {
+          "repo": "hono",
+          "number": 4065,
+          "gold_type": null,
+          "record": {
+            "issue_type": "other",
+            "severity": null,
+            "priority": null,
+            "component": [
+              "src/testing"
+            ]
+          },
+          "error": null
+        }
+      ]
+    }
+  }
+}
