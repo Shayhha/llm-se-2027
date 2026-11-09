@@ -27,6 +27,7 @@ lab work lives here, one folder per week.
 | [`study-notes/`](study-notes/) | My study notes for the quizzes: [`reading-w1-w2.md`](study-notes/reading-w1-w2.md) (all W1–W2 material, explained), [`quiz-prep-w1-w2.md`](study-notes/quiz-prep-w1-w2.md) (summary + 35 practice questions with answers) and [`labs-practice-guide.md`](study-notes/labs-practice-guide.md) (index of each lab's `PRACTICE.md` + themes across labs) |
 | [`W1/`](W1/) | The W1 lab ([melhadad/llm-se-2027-w1-lab](https://github.com/melhadad/llm-se-2027-w1-lab)). **Start with [`W1/TAKEAWAYS.md`](W1/TAKEAWAYS.md); practise with [`W1/PRACTICE.md`](W1/PRACTICE.md).** |
 | [`W2/`](W2/) | The W2 lab preparation and the in-class specifications lab. **Start with [`W2/TAKEAWAYS.md`](W2/TAKEAWAYS.md); practise with [`W2/PRACTICE.md`](W2/PRACTICE.md).** |
+| [`W3/`](W3/) | The W3 lab (DSPy). The graded copy is the private repo `Shayhha/llm-se-2027-w3-lab-Shayhha`. **Start with [`W3/TAKEAWAYS.md`](W3/TAKEAWAYS.md); practise with [`W3/PRACTICE.md`](W3/PRACTICE.md).** |
 
 ### Inside `W1/`
 
@@ -53,6 +54,17 @@ lab work lives here, one folder per week.
 | `spec-lab/openspec/changes/add-priority-score/`, `add-component-owners/` | Cycle 3: the other teams' in-flight changes (from `lab/in-flight/`) |
 | `spec-lab/lab/`, `docs/`, `README.md` (the rest) | The instructor's example folder that the lab works on |
 
+### Inside `W3/`
+
+| Path | What it is |
+|---|---|
+| `notebooks/w3_lab.ipynb` | **The lab, solved**: every TODO, all outputs, and the answers to the 9 questions |
+| `outputs/results/w3_results.json` | The score table per part and per issue |
+| `outputs/setup-check-shay-hahiashvili.txt` | The preparation's environment check |
+| `docs/decisions.md` | Decisions the lab did not specify (docstring, example, tool depth and limit, …) |
+| `improvement-log.md` | Agent and model failures, classified |
+| `src/triage_lab/`, `data/`, `tools/`, `README.md`, `SETUP.md` | The instructor's helper code, issue snapshot, source snapshots and handouts |
+
 The commit history of each lab was imported with `git subtree`, so the original commits and
 their dates are preserved.
 
@@ -61,6 +73,7 @@ their dates are preserved.
 - **W1** is a self-contained uv project: `cd solved-labs/W1`, `uv sync`, then `uv run pytest`.
   It needs a `.env` in `solved-labs/W1/` (not committed; see `.env.example`).
 - **W2 spec lab**: `cd solved-labs/W2/spec-lab` and run `openspec ...` there.
+- **W3** is a uv project with a notebook: `cd solved-labs/W3`, `uv sync`, add `.env`, open `notebooks/w3_lab.ipynb` with the `.venv` kernel.
 - **A new week**: create `solved-labs/WN/`, copy in that week's lab material, and commit as you go.
 
 ## Staying in sync with the instructor
