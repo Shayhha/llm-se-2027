@@ -1,0 +1,17 @@
+llm-se-2027 W3 lab - environment check
+Windows 11 | python 3.13.0 | 2026-11-09 09:21 UTC
+
+[  ok  ] python >= 3.13 - 3.13
+[  ok  ] dependencies importable - dspy 3.3.1
+[  ok  ] lab helpers importable - triage_lab
+[  ok  ] notebook kernel - ipykernel in .venv - pick .venv as the kernel in VSCode
+[  ok  ] .env present - 6 entries
+[  ok  ] .env untracked
+[  ok  ] model provider key - gemini
+[  ok  ] LLM_MODEL matches key - gemini/gemini-3.5-flash-lite
+[  ok  ] live model call - Ready
+[  ok  ] git identity - Shay Hahiashvili <shayhh@outlook.com>
+[  ok  ] pre-commit hook - installed now
+[  ok  ] lab data present - issue snapshot + 3 source snapshots
+
+All checks passed.
