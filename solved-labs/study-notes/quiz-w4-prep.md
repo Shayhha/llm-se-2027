@@ -58,6 +58,22 @@ Text is first split at spaces with regular expressions, and BPE works inside eac
 **Why it matters to us:** limits and cost are counted in **tokens**, not words. Code, rare words
 and non-English text take more tokens.
 
+### Remember it simply: tokenizer concepts
+
+| Concept | Easy way to remember it |
+|---|---|
+| **Tokenizer** | a **dictionary-based translator** between text and numbers |
+| **Encode** | **text → numbers.** "Write the sentence as dictionary page numbers." |
+| **Decode** | **numbers → text.** "Look the page numbers up again." Always gives back the same text. |
+| **Token** | a **Lego brick of text**: a word, part of a word, or a symbol |
+| **Token ID** | the **brick's catalogue number** |
+| **Vocabulary (V)** | the **box of all the bricks** the model owns |
+| **Context length (L)** | **how many bricks fit on the table** at once; the rest falls off (truncated) |
+| **Embedding** | the **meaning card** looked up for each catalogue number |
+| **Sub-word** | **unknown word? Build it from smaller bricks** ("Kuber" + "net" + "es") |
+| **BPE** | **glue the two bricks you see together most often into a new brick; repeat** |
+| **Fewest tokens** | **fewer bricks = cheaper, faster, more text fits** |
+
 ---
 
 ## 2. The language model: next-token prediction
@@ -102,6 +118,22 @@ stops when the model produces the **EOS** (end-of-sequence) token, or at a maxim
 | **Top-k + top-p** | both filters together | `top_k=50, top_p=0.95` | common practical setting | — |
 
 Also: `num_return_sequences` returns several outputs (beams or samples) to choose from.
+
+### Remember it simply: decoding strategies
+
+Picture the model offering a **menu of next words, each with a probability**:
+
+| Strategy | Easy way to remember it |
+|---|---|
+| **Greedy** | **always order the top dish.** Safe, but you eat the same thing forever (repetition). |
+| **Beam search** | **plan several meals ahead** and pick the best full plan. Great when the length is known (translation), boring for stories. |
+| **n-gram penalty** | **"never the same 2 words twice"**: kills repeats, but also "New York" the second time. |
+| **Sampling** | **roll a weighted die** over the whole menu. Varied, but can pick nonsense. |
+| **Temperature** | **a thermostat for creativity**: cold (low) = sticks to favourites, hot (high) = wild picks, 0 = greedy. |
+| **Top-k** | **roll the die only on the k best dishes.** Always the same number of choices, sure or not. |
+| **Top-p (nucleus)** | **roll only on the dishes that together cover p%** (e.g. 92%). Few choices when the model is sure, many when unsure. **It adapts.** |
+| **Top-k + top-p** | **both filters**: drop the junk, then adapt |
+| **Conclusion** | **top-k/top-p for creative, open-ended text; beam for fixed-length tasks; no single winner** |
 
 **Key arguments of the post:**
 - **Beam search is good when the output length is predictable** (translation, summarization), but
