@@ -1,36 +1,40 @@
 # Quiz W4 cheat sheet
 
-**Tokenization**
-- LLMs see **tokens** (text pieces → IDs → vectors), not words.
-- Goal: the **fewest tokens** for a vocabulary of at most **V**; input beyond the context length
-  **L** is cut.
-- **Sub-words** handle unknown words. **BPE** = repeatedly merge the most frequent pair
-  (`e`+`s` → `es`).
+**Text in, text out:** text → **encode** → token IDs → model → p(next token) → **decoding
+strategy** → token → append → repeat until **EOS** → **decode** → text.
 
-**Language models**
-- An LM computes **p(next token | previous tokens)**, which makes it a generative model.
-- Trained with **cross-entropy**; evaluated with **perplexity** (lower = better).
-- Bengio 2000: learn **word vectors** with the prediction (**representation learning**). This
-  beats n-grams.
+**Tokenizer**
+- **Encode:** string → list of integer **token IDs**. **Decode:** IDs → string. It's
+  deterministic and reversible.
+- **Purpose:** numbers for the network, a fixed vocabulary, **no unknown words** (sub-words).
+- Each ID is looked up as an **embedding** vector.
+- **V** = vocabulary size (30k–100k+). **L** = context length (longer input is truncated).
+  Goal: the **fewest tokens**.
+- **BPE:** start from characters, repeatedly **merge the most frequent pair** (`e`+`s` → `es`)
+  until the vocabulary has V tokens.
 
-**Transformer**
-- **Self-attention:** each token = a weighted mix of all tokens. **softmax(QKᵀ/√d)·V**.
-- **Positional embeddings** add word order (RoPE is the most common).
-- A block: attention → normalization → feed-forward → **residual**.
+**Language model**
+- Outputs **p(next token | previous tokens)** over the whole vocabulary (**softmax**).
+- Training: cross-entropy. Evaluation: **perplexity** (lower = better).
+- Learns **word vectors** (Bengio, representation learning). The Transformer uses
+  **self-attention**: each token = a weighted mix of all tokens.
 
-**Decoding**
-- **Autoregressive:** predict → append → repeat until **[EOS]**.
-- **Greedy:** best token each step, but not the best sequence. **Beam:** keep the b best
-  sequences.
-- **Temperature:** low = precise, high = creative.
-- **Top-k:** among the k best tokens. **Top-p:** among the tokens that sum to probability p.
-- Most-likely decoding gives **bland, repetitive** text, so use **top-p** sampling.
-- **Speculative decoding:** a small model drafts, the big model checks. Faster, same output.
-- Sampling → **different answers each time** → validate outputs and keep decisions deterministic.
+**Decoding (Hugging Face "How to generate")**
+- **Greedy:** the most likely token. Simple, but **repetitive** and misses better sequences.
+- **Beam search** (`num_beams`): keeps the best b sequences. Good for **translation and
+  summaries**, dull for open-ended text.
+- **n-gram penalty** (`no_repeat_ngram_size`): no repeated n-grams. Careful: "New York" only once.
+- **Sampling** (`do_sample`): random by probability. Varied, but can be incoherent.
+- **Temperature:** low = safe and sharp (→ 0 = greedy), high = creative.
+- **Top-k:** among the k most likely tokens (fixed). **Top-p:** among the tokens covering
+  probability p (**adapts**).
+- **Conclusion:** top-k and top-p are more fluent for open-ended text; repetition comes mostly
+  from **training**; **no one-size-fits-all**.
+- Sampling means **different outputs for the same prompt**, so validate and keep decisions
+  deterministic.
 
 **Lab 4: git** (provisional)
-- Objects are named by the **hash of their content**: **blob** (file), **tree** (folder),
-  **commit** (tree + parents + message).
-- A **branch** is a pointer to a commit. **HEAD** is where you are now. **Detached HEAD** points
-  straight to a commit.
-- Lost commits → **`git reflog`** → `git reset --hard <hash>`.
+- Objects are named by **content hash**: **blob** (file), **tree** (folder), **commit** (tree +
+  parents + message).
+- **Branch** = a pointer, **HEAD** = where you are. Lost commits → **`git reflog`** →
+  `git reset --hard <hash>`.

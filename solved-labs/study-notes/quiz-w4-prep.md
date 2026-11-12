@@ -1,93 +1,146 @@
 # Quiz W4 prep
 
-**Scope:** the W3 lecture, `LLMs/` files 01, 02, 02.5 and 03 (tokenization, next-token
-prediction, Transformers, decoding), plus lab 4 (git internals). The lab part follows the
-syllabus, because the lab isn't published yet.
+**Scope:** the W3 lecture: `LLMs/` 01 (tokenization), 02 (next-token prediction), 02.5
+(Transformers), 03 (decoding), ending with the Hugging Face post *How to generate text*
+(von Platen). Plus lab 4 (git), provisional until the lab is published.
+
+**The big picture: text in, text out.**
+
+```
+text ──encode──► token IDs ──model──► p(next token) ──decoding strategy──► next token ID
+ ▲                                                                              │
+ └──────────────decode◄────── append to the input and repeat until EOS ◄────────┘
+```
 
 ---
 
-## 1. Tokenization
+## 1. Tokenization: encoding and decoding text
 
-- **LLMs work on tokens, not words.** A token is a piece of text with an integer ID, mapped to a
-  vector.
-- **Why tokenize:**
-  - turn text into numbers;
-  - keep the **vocabulary** a manageable size;
-  - handle **unknown words** by splitting them into known pieces.
-- **Two parameters:** **vocabulary size V** (30k–100k+) and **context length L** (the maximum
-  number of tokens; longer input is **truncated**).
-- **Goal:** the **fewest tokens** for a vocabulary of at most V, so it's cheaper and faster, and
-  more text fits. It must be **reversible**: detokenize(tokenize(text)) = text.
-- **Sub-words:** "learn-ing", "micro-processor", "Kuber-net-es". Related words share pieces, and
-  nothing is unknown.
-- **BPE (byte pair encoding):** start from single characters, then **repeatedly merge the most
-  frequent adjacent pair** into a new token, until the vocabulary reaches V.
-  Example: `e`+`s` → `es`, then `es`+`t` → `est`.
+**What a tokenizer is:** a fixed, deterministic function between text and integers.
 
-## 2. Next-token prediction
-
-- **A language model computes p(next token | previous tokens)**, a probability over the whole
-  vocabulary.
-- Repeating it gives a probability for whole texts (chain rule), so it's a **generative model**.
-- **Training:** make the real next token as likely as possible (**cross-entropy loss**).
-- **Evaluation:** **perplexity**, how "surprised" the model is by real text. Lower is better.
-- **Bengio et al. (2000):** instead of counting word sequences (**n-grams**), learn a **vector per
-  word** together with the prediction. Similar words get similar vectors, so the model handles
-  sentences it never saw. This is **representation learning**, the idea behind LLMs.
-- **GPT in three steps:**
-  1. token embedding + **position** embedding;
-  2. **n transformer blocks**;
-  3. **softmax** → a probability for each of the V tokens.
-- LMs are **better than humans** at next-token prediction.
-
-## 3. The Transformer
-
-- **"Attention Is All You Need" (2017)** replaced RNNs and LSTMs.
-- **Self-attention:** each token's representation becomes a **learned weighted mix of all the
-  tokens**, so it can use any word in the context.
-  **Attention = softmax(Q·Kᵀ / √d_k) · V** (queries, keys, values). **Multi-head** = several
-  attentions in parallel.
-- **Positional embeddings:** attention ignores word order, so position is added. The kinds are
-  sinusoidal, learned, and **RoPE** (most common).
-- **One block:** attention → layer normalization → feed-forward network → **residual connection**
-  (add the input back).
-
-## 4. Decoding (how text is generated)
-
-- **Autoregressive:** pick a token, append it, predict again, until **[EOS]** (end of sequence).
-
-| Strategy | What it does | Key point |
+| | Input | Output |
 |---|---|---|
-| **Greedy** | always the most likely token | not the best overall **sequence** |
-| **Beam search** | keeps the b best sequences | better sequences, can be bland |
-| **Temperature** | low = sharp, high = flat distribution | precise ↔ creative |
-| **Top-k** | samples among the k most likely | fixed size |
-| **Top-p (nucleus)** | samples from the smallest set with total probability p | adapts to the model's certainty |
+| **Encode** (tokenize) | a string: `"Tokenization is fun"` | a list of integer **token IDs**, e.g. `[3404, 2065, 374, 2523]` (illustrative; the real IDs depend on the tokenizer) |
+| **Decode** (detokenize) | a list of token IDs | the original string |
 
-- **Degeneration:** always choosing the most likely text gives **bland, repetitive** output.
-  The fix is **nucleus sampling**, which cuts the unreliable tail but keeps variety.
-- **Other failures:** repetition, never stopping, stopping too early.
-- **Speculative decoding:** a **small model drafts** tokens and the **big model checks** them in
-  parallel. It's 2–3× faster with the **same output**, and it's what production systems use.
-- **Why it matters to us:** sampling means the **same prompt can give different answers**. So we
-  **validate** outputs and keep decisions in **deterministic** code.
+- **Reversible:** `decode(encode(text)) == text`, and the same text always gives the same IDs.
+- Each ID is then looked up in the model's **embedding table** to get a vector. The model only
+  ever sees IDs and vectors, never characters.
+
+**Its purpose (why tokenize):**
+1. **Numbers:** a neural network needs numbers, so text becomes IDs, then vectors.
+2. **A fixed vocabulary of manageable size:** not one entry per possible word.
+3. **No unknown words:** a rare or new word is split into known pieces, never `<UNK>`.
+
+**Key parameters:**
+- **Vocabulary size V:** how many distinct tokens exist (about 30k–100k+). A bigger vocabulary
+  means fewer tokens per text, but a bigger model.
+- **Context length L:** the maximum number of tokens the model handles at once (e.g. 4096).
+  Longer input is **truncated**.
+
+**The goal of a good tokenizer:** represent text with the **fewest tokens possible** for a
+vocabulary of at most V. Fewer tokens means faster and cheaper, with more text fitting in the
+context.
+
+**Sub-word tokens**, between characters and whole words:
+- inflections share a root: "learn" + "ing", "learn" + "ed";
+- compounds split: "micro" + "processor";
+- unseen words still work: "Kuber" + "net" + "es".
+
+**BPE (byte pair encoding)** learns the vocabulary from a corpus:
+1. start with every single character;
+2. find the **most frequent adjacent pair** and merge it into one new token;
+3. repeat until the vocabulary has V tokens.
+
+Example: words `n e w e s t`, `w i d e s t` → merge `e`+`s` → `es` → merge `es`+`t` → `est`.
+Text is first split at spaces with regular expressions, and BPE works inside each piece.
+
+**Why it matters to us:** limits and cost are counted in **tokens**, not words. Code, rare words
+and non-English text take more tokens.
+
+---
+
+## 2. The language model: next-token prediction
+
+- **What it computes:** given the previous tokens, a **probability for every token in the
+  vocabulary** being next: **p(tₙ | t₀ … tₙ₋₁)**. The last step is a **softmax**, which turns V
+  scores into probabilities that sum to 1.
+- Multiplying these step by step gives the probability of a whole text, so it's a **generative
+  model**.
+- **Training:** make the real next token as likely as possible (**cross-entropy loss**).
+  **Evaluation:** **perplexity** (lower = better).
+- **Main idea (Bengio 2000):** learn a **vector for each word** along with the prediction. Similar
+  words get similar vectors, so the model handles sentences it never saw. This is
+  **representation learning**, and it beat the old **n-gram** counting models.
+
+## 3. The Transformer (the model inside)
+
+- **Self-attention:** each token's vector is updated as a **weighted mix of all the tokens in the
+  context**, with weights the model learns. **softmax(Q·Kᵀ/√d)·V**.
+- **Positional embeddings** add word order, because attention alone ignores it (RoPE is most
+  common).
+- **GPT:** token embeddings + position → n Transformer blocks → softmax over the vocabulary.
+
+---
+
+## 4. Decoding: how text is generated (the Hugging Face post)
+
+**Autoregressive generation:** the model gives only the *next-token* distribution. To write
+text: choose a token, **append it to the input**, predict again. The length isn't fixed: it
+stops when the model produces the **EOS** (end-of-sequence) token, or at a maximum length. The
+**decoding strategy** is how we *choose* the token from the distribution.
+
+| Method | How it chooses | Parameters (HF `generate`) | Pros | Cons |
+|---|---|---|---|---|
+| **Greedy search** | always the single most likely token | (default) | simple, fast, deterministic | misses a likely word hidden behind a less likely one; **repeats itself** |
+| **Beam search** | keeps the `num_beams` most likely sequences, returns the best | `num_beams`, `early_stopping` | always at least as likely as greedy (not guaranteed best) | still **repetitive**; bland |
+| **n-gram penalty** | forbids any n-gram appearing twice (probability set to 0) | `no_repeat_ngram_size` | removes repetition | blunt: "New York" could appear only once |
+| **Sampling** | picks the next token **randomly by its probability** | `do_sample=True` | varied, not repetitive | often **incoherent**; non-deterministic |
+| **Temperature** | reshapes the distribution: **low = sharper** (favours likely tokens), **high = flatter** | `temperature` | low → more coherent | → 0 behaves like greedy |
+| **Top-k** (Fan et al. 2018) | samples only among the **k most likely** tokens | `top_k` (e.g. 50) | removes nonsense tokens; used by GPT-2 | k is **fixed**: too many choices when the model is sure, too few when it isn't |
+| **Top-p / nucleus** (Holtzman et al. 2019) | samples from the **smallest set whose probabilities add up to p** | `top_p` (e.g. 0.92) | the set **adapts**: small when the model is sure, large when it isn't | — |
+| **Top-k + top-p** | both filters together | `top_k=50, top_p=0.95` | common practical setting | — |
+
+Also: `num_return_sequences` returns several outputs (beams or samples) to choose from.
+
+**Key arguments of the post:**
+- **Beam search is good when the output length is predictable** (translation, summarization), but
+  weak for **open-ended generation** (stories, dialogue).
+- **Humans don't write the most probable words.** Good human text is *surprising* (Holtzman), so
+  maximizing probability gives dull, repetitive text, called **degeneration**.
+
+**The conclusion (where the lecture ended):**
+1. For open-ended generation, **top-k and top-p sampling produce more fluent text** than greedy
+   or beam search.
+2. The repetition problem is **caused mostly by the model and how it was trained**, not only by
+   the decoding method (Welleck et al.). Top-k and top-p can also repeat, and with a better
+   training objective, beam search can win again.
+3. **There is no one-size-fits-all method.** Choose the decoding strategy for the use case.
+
+**Speculative decoding** (from file 03): a small model drafts tokens and the big model checks
+them in parallel. It's faster with the same output, and it's used in production.
+
+**Why it matters for software engineering:** with sampling, **the same prompt gives different
+outputs**. So we validate every output and keep decisions in deterministic code, and for
+repeatable runs we use temperature 0 (greedy) or caching.
+
+---
 
 ## 5. Lab 4: git internals (provisional)
 
-- **Git is a content-addressed store:** every object is named by the **hash of its content**, and
-  objects never change.
+- Git stores **objects named by the hash of their content** (content-addressed, immutable):
   - **blob** = a file's content
-  - **tree** = a directory (names → hashes)
-  - **commit** = a tree + parent commit(s) + a message
-- **The four commands the lab implements:**
+  - **tree** = a directory
+  - **commit** = a tree + parent commit(s) + message
+- **The lab's commands:**
   - `hash-object`: file → blob
   - `cat-file`: read an object
   - `write-tree`: staging area → tree
   - `commit-tree`: tree → commit
-- **Refs:** a branch is a movable pointer to a commit. **HEAD** points to the current branch.
-  **Detached HEAD** points straight to a commit.
-- **Recovery:** **`git reflog`** lists everywhere HEAD has been, so "lost" commits after a bad
-  rebase or reset can be found and restored with `git reset --hard <hash>`.
+- **Branch** = a movable pointer to a commit. **HEAD** = the current position. **Detached HEAD** =
+  pointing straight at a commit.
+- **Lost commits** (bad rebase or reset): `git reflog` shows where HEAD has been, then
+  `git reset --hard <hash>`.
 
 ---
 
@@ -95,83 +148,84 @@ syllabus, because the lab isn't published yet.
 
 | Concept | Meaning |
 |---|---|
-| **Token** | a piece of text with an integer ID; what the LLM actually processes |
-| **Vocabulary size (V)** | the number of distinct tokens the model knows |
-| **Context length (L)** | the maximum number of tokens processed at once; extra is cut |
-| **Sub-word tokenization** | splitting words into frequent pieces; no unknown words |
-| **BPE** | builds the vocabulary by repeatedly merging the most frequent pair |
-| **Language model** | p(next token \| previous tokens) |
-| **Generative model** | a model of a probability distribution over data (all possible texts) |
-| **Cross-entropy** | the training loss: how unlikely the real next token was |
-| **Perplexity** | the evaluation score: the model's uncertainty on real text (lower = better) |
-| **n-gram model** | the old approach: counts short word sequences |
-| **Representation learning** | learning vectors (embeddings) that capture meaning |
-| **Embedding** | the vector for a token |
-| **Positional embedding** | adds word order (sinusoidal / learned / RoPE) |
-| **Self-attention** | each token = a weighted mix of all tokens; softmax(QKᵀ/√d)V |
-| **Multi-head attention** | several attentions in parallel |
-| **Residual connection** | adds a block's input back to its output |
+| **Token** | a piece of text with an integer ID |
+| **Tokenizer** | the deterministic, reversible function between text and token IDs |
+| **Encode / decode** | text → token IDs / token IDs → text |
+| **Token ID** | the integer for a token; it indexes the embedding table |
+| **Embedding** | the vector the model uses for a token |
+| **Vocabulary size V** | the number of distinct tokens |
+| **Context length L** | the maximum tokens per input; extra is truncated |
+| **Sub-word** | a word piece; handles rare and new words |
+| **BPE** | builds the vocabulary by repeatedly merging the most frequent adjacent pair |
+| **Language model** | gives p(next token \| previous tokens) |
 | **Softmax** | turns scores into probabilities that sum to 1 |
-| **Autoregressive** | generate one token at a time, feeding each back in |
-| **[EOS]** | the end-of-sequence token that stops generation |
-| **Greedy / beam search** | most likely token / keep the b best sequences |
-| **Temperature** | how sharp or flat the sampling distribution is |
-| **Top-k / top-p** | sample among k tokens / among tokens totalling probability p |
-| **Degeneration** | bland, repetitive output from likelihood-maximizing decoding |
+| **Cross-entropy / perplexity** | training loss / evaluation score (lower = better) |
+| **Representation learning** | learning vectors that capture meaning (Bengio) |
+| **Self-attention** | each token = a learned weighted mix of all tokens |
+| **Autoregressive** | generate one token at a time, feeding it back in |
+| **EOS** | the end-of-sequence token; generation stops there |
+| **Decoding strategy** | how the next token is chosen from the distribution |
+| **Greedy** | always the most likely token |
+| **Beam search** | keep the `num_beams` best sequences |
+| **n-gram penalty** | forbid repeating any n-gram (`no_repeat_ngram_size`) |
+| **Sampling** | choose randomly by probability (`do_sample=True`) |
+| **Temperature** | low = sharper / safer, high = flatter / more creative |
+| **Top-k** | sample among the k most likely tokens (fixed size) |
+| **Top-p (nucleus)** | sample among the tokens covering probability p (adaptive) |
+| **Degeneration** | dull, repetitive text from maximizing probability |
+| **Open-ended generation** | stories and dialogue, where the length and content vary |
 | **Speculative decoding** | a small model drafts, the big one verifies: faster, same output |
-| **Blob / tree / commit** | git objects: file content / directory / snapshot + history |
-| **Content-addressed** | named by the hash of the content |
-| **Ref / HEAD** | a movable pointer to a commit / the current position |
-| **Reflog** | the history of where HEAD has been; used to recover commits |
+| **Blob / tree / commit** | git objects: file / directory / snapshot |
+| **Reflog** | a log of where HEAD has been; recovers lost commits |
 
 ---
 
 ## Practice Q&A
 
-**1.** Why do LLMs tokenize text?
-<details><summary>Answer</summary>To turn text into numbers, keep the vocabulary small, and handle unknown words by splitting them into known pieces.</details>
+**1.** What are the input and output of a tokenizer?
+<details><summary>Answer</summary>Encode: input a string, output a list of integer token IDs. Decode: input token IDs, output the string. decode(encode(text)) = text.</details>
 
-**2.** What does a good tokenizer optimise?
-<details><summary>Answer</summary>The fewest tokens for a fixed vocabulary size, which makes it cheaper and faster and fits more text in the context. It must also be reversible.</details>
+**2.** What is the purpose of tokenization?
+<details><summary>Answer</summary>Turn text into numbers the network can use, keep a fixed vocabulary of manageable size, and handle any word (rare or new words are split into known pieces).</details>
 
-**3.** How does BPE build its vocabulary?
-<details><summary>Answer</summary>Start from characters and repeatedly merge the most frequent adjacent pair into a new token until the vocabulary reaches size V.</details>
+**3.** What happens to a token ID inside the model?
+<details><summary>Answer</summary>It is looked up in the embedding table and becomes a vector, which the Transformer processes.</details>
 
-**4.** What does a language model compute?
-<details><summary>Answer</summary>A probability distribution over the next token given the previous tokens.</details>
+**4.** What do V and L mean, and what is the trade-off of a bigger V?
+<details><summary>Answer</summary>V is the vocabulary size and L the maximum context length (longer input is truncated). A bigger V gives fewer tokens per text but a bigger model.</details>
 
-**5.** How is a language model trained and evaluated?
-<details><summary>Answer</summary>Trained to make the real next token likely (cross-entropy loss). Evaluated with perplexity; lower is better.</details>
+**5.** Why sub-words rather than whole words or characters?
+<details><summary>Answer</summary>Whole words need a huge vocabulary and fail on new words; characters make sequences very long. Sub-words keep the vocabulary fixed, share roots, and split unseen words into known pieces.</details>
 
-**6.** Why did neural LMs beat n-gram models?
-<details><summary>Answer</summary>They learn word vectors, so similar words behave similarly and unseen sentences still get sensible probabilities (representation learning).</details>
+**6.** Run BPE one step on `n e w e s t`, `w i d e s t`.
+<details><summary>Answer</summary>The most frequent pair is `e`+`s`, so merge it into `es`: `n e w es t`, `w i d es t`. Next, `es`+`t` → `est`.</details>
 
-**7.** What does self-attention do?
-<details><summary>Answer</summary>It updates each token's representation as a learned weighted mix of all tokens in the context: softmax(QKᵀ/√d)·V.</details>
+**7.** What does a language model output at each step?
+<details><summary>Answer</summary>A probability for every token in the vocabulary being next (a softmax over V tokens).</details>
 
-**8.** Why are positional embeddings needed?
-<details><summary>Answer</summary>Attention ignores word order; positional embeddings add it (sinusoidal, learned, RoPE).</details>
+**8.** What is autoregressive generation, and when does it stop?
+<details><summary>Answer</summary>Choose a token, append it to the input, predict again; it stops at the EOS token or a maximum length.</details>
 
-**9.** What is autoregressive generation?
-<details><summary>Answer</summary>Generate one token, append it to the input, predict the next, and repeat until [EOS].</details>
+**9.** Greedy vs beam search?
+<details><summary>Answer</summary>Greedy takes the most likely token each step and can miss better sequences. Beam search keeps the `num_beams` best sequences, so it finds sequences at least as likely, but both tend to repeat.</details>
 
-**10.** What is the weakness of greedy decoding?
-<details><summary>Answer</summary>Picking the best token at each step doesn't guarantee the best overall sequence.</details>
+**10.** What does `no_repeat_ngram_size` do, and what is its risk?
+<details><summary>Answer</summary>It forbids any n-gram from appearing twice. The risk is that a phrase that legitimately repeats (e.g. "New York") can appear only once.</details>
 
-**11.** Temperature vs top-k vs top-p?
-<details><summary>Answer</summary>Temperature makes the distribution sharper or flatter; top-k samples among the k most likely tokens; top-p samples from the smallest set whose probabilities sum to p.</details>
+**11.** What does temperature do? What happens as it approaches 0?
+<details><summary>Answer</summary>It reshapes the distribution: low is sharper (likely tokens favoured, more coherent), high is flatter (more random). Near 0 it becomes greedy.</details>
 
-**12.** What is text degeneration, and what fixes it?
-<details><summary>Answer</summary>Likelihood-maximizing decoding produces bland, repetitive text. Nucleus (top-p) sampling fixes it by cutting the unlikely tail while keeping variety.</details>
+**12.** Top-k vs top-p: which adapts, and why does that matter?
+<details><summary>Answer</summary>Top-k always keeps k tokens. Top-p keeps the smallest set covering probability p, so it is small when the model is confident and large when it is unsure. Top-p adapts and avoids top-k's too-many or too-few choices.</details>
 
-**13.** What is speculative decoding?
-<details><summary>Answer</summary>A small model drafts tokens and the big model verifies them in parallel: faster, with identical output.</details>
+**13.** Why is beam search a poor choice for open-ended generation?
+<details><summary>Answer</summary>It works when output length is predictable (translation, summarization); for stories and dialogue it gives dull, repetitive text, and humans don't write only the most probable words.</details>
 
-**14.** Why can the same prompt give different outputs, and what do we do about it?
-<details><summary>Answer</summary>Decoding samples from a distribution. We validate outputs and keep decisions in deterministic code.</details>
+**14.** What did the "How to generate" post conclude?
+<details><summary>Answer</summary>Top-k and top-p give more fluent open-ended text than greedy or beam; repetition is mostly caused by how the model was trained; and there is no one-size-fits-all decoding method.</details>
 
-**15.** (Lab 4) Name git's three object types.
-<details><summary>Answer</summary>Blob (file content), tree (directory), commit (tree + parents + message), each named by the hash of its content.</details>
+**15.** Why can the same prompt give different answers, and what do we do about it?
+<details><summary>Answer</summary>Sampling (temperature, top-k, top-p) picks randomly. We validate outputs and keep decisions deterministic; we use temperature 0 or caching for repeatable runs.</details>
 
-**16.** (Lab 4) How do you recover commits lost in a bad rebase?
-<details><summary>Answer</summary>Find the old commit hash in `git reflog`, then `git reset --hard <hash>` (or create a branch there).</details>
+**16.** (Lab 4) Name git's three object types, and how to recover lost commits.
+<details><summary>Answer</summary>Blob (file), tree (directory), commit (tree + parents + message), all named by content hash. Recover lost commits with `git reflog` → `git reset --hard <hash>`.</details>
