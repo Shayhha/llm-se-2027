@@ -1,11 +1,13 @@
+from typing import Any
+
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 
 def plot_radon_theorem():
     fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection='3d')
+    # mplot3d is untyped (e.g. zs is inferred as int), so don't type-check Axes3D calls.
+    ax: Any = fig.add_subplot(111, projection='3d')
 
     # --- Define the Points ---
     # Set A: 3 points forming a triangle in the XY plane (z=0)

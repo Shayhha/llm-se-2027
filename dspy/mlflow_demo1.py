@@ -2,6 +2,7 @@ import os
 
 import dspy
 import mlflow
+import mlflow.dspy
 
 mlflow.set_tracking_uri("http://127.0.0.1:5000/")
 mlflow.set_experiment("deploy_dspy_program")
@@ -19,7 +20,7 @@ class MyProgram(dspy.Module):
         super().__init__()
         self.cot = dspy.ChainOfThought("question -> answer")
 
-    def forward(self, messages):
+    def forward(self, messages: list[dict[str, str]]):
         return self.cot(question=messages[0]["content"])
 
 dspy_program = MyProgram()
