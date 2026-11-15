@@ -89,13 +89,13 @@ duplicate detection (content hash), ledger posting.
 **Annotated data.** [CORD v2](https://github.com/clovaai/cord): 1,000 annotated receipts
 (800 / 100 / 100), CC BY 4.0, hierarchical field labels including line items.
 Metrics: field-level F1, tree-edit-distance accuracy (as used by Donut), total exact match. 
-Optional out-of-distribution test on SROIE (English receipts, 4 fields).
+Optional out-of-distribution test on [SROIE](https://www.kaggle.com/datasets/urbikn/sroie-datasetv2) (English receipts, 4 fields). Evaluation needs to take into account anonymized fields in CORD v2 and the difference in fields between the two datasets.
 
 *Team-labelled dimension:* expense category and an "auto-post vs. needs review" decision.
 
 *Baseline:* Tesseract OCR + regex for total and date.
 
-**Architecture.** Async pipeline: upload → object store → job queue → VLM extraction worker → validator → auto-post or human review queue. The ledger is event-sourced (corrections are events), so every posting can be reversed and audited.
+**Architecture.** Async pipeline: upload → object store → job queue → VLM extraction worker → validator → auto-post or human review queue. The ledger is event-sourced (corrections are events), so every posting can be reversed and audited. The baseline is a second implementation of the same extractor interface.
 
 *Hook:* receipt arithmetic (Σ line items = subtotal; subtotal + tax + service = total) is a runtime contract. When it fails, the worker re-prompts with the violated constraint, within a bounded budget. Measure what the repair loop buys in exact match against what it costs in tokens, and what precision auto-posted receipts actually reach.
 
@@ -118,13 +118,14 @@ Optional out-of-distribution test on SROIE (English receipts, 4 fields).
 *Not AI:* SQL parsing and validation (e.g. `sqlglot`), read-only enforcement, `LIMIT` injection, execution, charting, caching.
 
 **Annotated data.** [BIRD mini-dev](https://github.com/bird-bench/mini_dev): 500 question / SQL pairs over 11 databases, SQLite / MySQL / PostgreSQL, with "evidence" (external knowledge) per question; CC BY-SA 4.0. Metrics: execution accuracy (EX) and
-R-VES (efficiency). Spider dev can be used as a secondary set.
+R-VES (efficiency). [Spider dev](https://yale-lily.github.io/spider) can be used as a secondary set.
 
 *Team-labelled dimension:* is the question ambiguous or unanswerable from the schema, and is the explanation faithful to the SQL?
 
 *Baseline:* single zero-shot prompt with the full schema.
 
 **Architecture.** Schema-catalog service (introspection, column descriptions, sampled values) → retrieval for schema linking → generator → static verifier (parse, allowlist, `EXPLAIN` cost estimate) → sandboxed read-only executor with timeouts.
+The system should handle the various SQL dialects. Use [SQLAlchemy](https://www.sqlalchemy.org/) for introspection. Spider dev doesn't hold descriptions, the schema-catalog must handle that.
 *Hook:* execution is the oracle. Generate N candidates, execute them, vote on **result sets** rather than SQL text. Measure accuracy, cost and latency against N.
 
 **Interfaces.**
@@ -154,7 +155,8 @@ score (correct label **and** all supporting facts retrieved).
 
 *Baseline:* BM25 top-k + single-shot verdict.
 
-**Architecture.** Retrieval service with an index-build pipeline; verifier as a prompt program (decompose → hop loop → verdict); deterministic citation checker; evidence cache.
+**Architecture.** Retrieval service with an index-build pipeline; verifier as a prompt program (decompose → hop loop → verdict); deterministic citation checker; evidence cache (i.e. cache of retrieval results).
+Building the index is an offline pipeline. But the index may change (for example, corpus-poisoning test), so index version should be taken into account in the evidence cache, the evaluation and auditability.
 
 *Hook:* a bounded multi-hop loop with an explicit stop condition. Retrieval recall is measured separately from verdict accuracy, so each failure can be attributed to *didn't find* or *found but misjudged*. Optional: compare against an RLM variant.
 
@@ -181,7 +183,7 @@ score (correct label **and** all supporting facts retrieved).
 
 *Team-labelled dimension:* usefulness and correctness of incident summaries on ~60 incident windows.
 
-*Baseline:* Drain.
+*Baseline:* [Drain](https://pypi.org/project/drain3/), with a deterministic summary.
 
 **Architecture.** Ingestion (file / tail) → queue → parser service with adaptive template cache → template store → time series → anomaly detector → incident summariser.
 
@@ -238,13 +240,14 @@ clause's **position** in the document (lost in the middle). On a new version, on
 
 **Annotated data.** [MultiWOZ 2.4](https://github.com/smartyfh/MultiWOZ2.4): ~10k
 [MultiWOZ](https://github.com/budzianowski/multiwoz) for info on the data.
-Multi-domain dialogues with corrected validation and test state annotations; ships with the venue databases. Metrics: joint goal accuracy (JGA), slot F1, and end-to-end inform and success rates on simulated dialogues driven by MultiWOZ user goals. 
+Multi-domain dialogues with corrected validation and test state annotations; ships with the venue databases. Metrics: joint goal accuracy (JGA), slot F1, and end-to-end inform and success rates on simulated dialogues driven by MultiWOZ user goals. Licence: check the repository before snapshotting.
 
 *Team-labelled dimension:* response faithfulness (no hallucinated venues or attributes) and helpfulness on ~100 turns.
 
 *Baseline:* rule-based slot filling with string matching against the ontology.
 
 **Architecture.** Session service (typed state plus turn log) → DST → deterministic policy → venue DB service → booking service (hold → confirm → cancel) → NLG.
+The team must build a simulated booking service, including deterministic availability rules.
 
 *Hook:* the LLM is confined to perception (DST) and surface realisation (NLG); the typed state is the contract between them. Bookings have legitimate intermediate states (*held*, *awaiting confirmation*), which makes autonomous use by agents safe.
 
@@ -272,6 +275,7 @@ Face): ~20k real-world charts (Statista, Pew, OWID, OECD) with ~32k human-writte
 generated questions, plus underlying data tables and annotations; GPL-3.0. Metrics: relaxed
 accuracy (5% numeric tolerance) for QA; table-extraction score (relative number-set
 similarity / RMS-F1, as in DePlot).
+Note that ChartQA has a human-written question split and a machine-generated one, and scores differ a lot between them. Plan testing and report per split.
 
 *Team-labelled dimension:* alt-text quality against a rubric (accuracy, salience,
 conciseness) on ~100 charts.
@@ -308,9 +312,10 @@ Mask everything that could identify a person, keep the text useful, and record w
 *Team-labelled dimension:* re-identification risk. An LLM "attacker" tries to re-identify
 the person in a masked document; the team labels on ~60 documents whether it succeeded.
 
-*Baseline:* [Presidio (rules + NER)](https://github.com/data-privacy-stack/presidio)
+*Baseline:* [Microsoft Presidio](https://microsoft.github.io/presidio/), [source](https://github.com/microsoft/presidio). (rules + NER).
 
 **Architecture.** Detector ensemble (rules, NER, LLM) with a fusion step → coreference-aware pseudonymiser → encrypted vault (pseudonym ↔ original) with access control and an audit log → policy configuration (masking levels).
+The team needs to implement a vault and design key management.
 
 *Hook:* the AI component is itself a privacy risk, because sending raw documents to an external API exposes the very data being protected. The team must decide and justify, in an ADR backed by measurements, among a local model (Ollama), an external API, or a two-stage design (local pre-masking, then the API on partially masked text). Report the privacy / utility trade-off as a curve, not a single point.
 
