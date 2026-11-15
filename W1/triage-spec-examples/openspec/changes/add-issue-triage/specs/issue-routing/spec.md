@@ -16,6 +16,12 @@ routing tables below. Equal inputs SHALL produce equal outputs.
 Routing SHALL produce a `Routing` value with fields `queue` (string), `sla_hours` (positive
 integer), `escalate` (boolean) and `reason` (non-empty string naming the rule applied).
 
+#### Scenario: Result fields
+- **GIVEN** a `documentation` record with `severity = low`, `confidence = 0.9`
+- **WHEN** routing runs
+- **THEN** the result is `queue = docs`, `sla_hours = 168`, `escalate = false`
+- **AND** `reason` is a non-empty string naming the type-based queue rule
+
 ### Requirement: Queue by Issue Type
 Unless another requirement in this spec overrides it, the queue SHALL be determined by
 `issue_type`:
@@ -98,10 +104,21 @@ A `TriageFailure` (see `issue-enrichment`) SHALL be routed to queue `triage-manu
 - **WHEN** routing runs
 - **THEN** `queue = triage-manual`
 
-## Non-functional requirements (informative)
+### Requirement: Routing Test Coverage
+Every row of every routing table and every scenario in this spec SHALL have a unit test.
+Routing is correct or incorrect — it has no accuracy metric.
 
-- **Testability:** every row of every table and every scenario above SHALL have a unit test.
-  Routing is correct or incorrect — it has no accuracy metric.
-- **Exhaustiveness:** adding a value to `IssueType` or `Severity` without a corresponding table
-  entry SHALL be a type error (enforced via `dict[IssueType, str]` with pyright exhaustiveness
-  checks or `assert_never`).
+#### Scenario: Table rows are covered
+- **GIVEN** the queue table (5 rows) and the SLA table (4 rows)
+- **WHEN** the unit tests run
+- **THEN** each of the 9 rows is asserted by at least one test
+
+### Requirement: Exhaustive Routing Tables
+Adding a value to `IssueType` or `Severity` without a corresponding routing table entry SHALL
+be a type error (enforced via `dict[IssueType, str]` with pyright exhaustiveness checks or
+`assert_never`).
+
+#### Scenario: New issue type without a queue
+- **GIVEN** a new value added to `IssueType` with no entry in the queue table
+- **WHEN** `pyright --strict` runs
+- **THEN** it reports a type error

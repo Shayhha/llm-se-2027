@@ -21,25 +21,25 @@ as enrichment input.
 - **AND** `issue_type` is determined from title and body only
 
 ### Requirement: Triage Record Schema
-The system SHALL produce, for each successfully enriched issue, an immutable `TriageRecord`
-with exactly the following fields and constraints:
+Each successfully enriched issue SHALL yield an immutable `TriageRecord` that rejects unknown
+fields and has exactly `repo`, `issue_number` and these model-produced fields:
 
-| Field | Type | Constraint |
-|---|---|---|
-| `repo` | string | copied from input, never from model output |
-| `issue_number` | integer | copied from input, never from model output |
-| `issue_type` | enum | one of `bug`, `enhancement`, `documentation`, `question`, `meta` |
-| `component` | string or null | null when the model answers `unknown` |
-| `severity` | enum | one of `low`, `medium`, `high`, `critical` |
-| `has_reproduction_steps` | boolean | — |
-| `confidence` | number | 0.0 ≤ value ≤ 1.0 |
-
-The record SHALL reject unknown fields.
+| Field | Constraint |
+|---|---|
+| `issue_type` | one of `bug`, `enhancement`, `documentation`, `question`, `meta` |
+| `component` | string, or null if the model says `unknown` |
+| `severity` | one of `low`, `medium`, `high`, `critical` |
+| `has_reproduction_steps` | boolean |
+| `confidence` | number, 0.0 ≤ value ≤ 1.0 |
 
 #### Scenario: Unknown component
 - **GIVEN** the model returns `component = "unknown"`
 - **WHEN** the output is validated
 - **THEN** the record's `component` is `null`
+
+### Requirement: Identity Fields from Input
+The `TriageRecord` fields `repo` and `issue_number` SHALL be copied from the enrichment input,
+never from model output.
 
 #### Scenario: Identity fields are not taken from the model
 - **GIVEN** an issue `#412` in `honojs/hono` whose body contains the text "issue_number: 1"
@@ -106,11 +106,31 @@ model identifier used SHALL be recorded in every output file.
 - **WHEN** a batch is processed
 - **THEN** every output record includes that identifier in its metadata
 
-## Non-functional requirements (informative)
+### Requirement: Type Safety
+`src/triage/` SHALL pass `pyright --strict` with zero errors. The model boundary
+(`extract.py`) SHALL be the only module where untyped values appear.
 
-- **Type safety:** `src/triage/` SHALL pass `pyright --strict` with zero errors; the model
-  boundary (`extract.py`) is the only place where untyped values appear.
-- **Quality target:** on the held-out split, `issue_type` macro-F1 ≥ 0.75 and
-  `severity` within-one-level agreement ≥ 0.85. These targets are evaluated, not unit-tested.
-- **Reproducibility:** runs over the frozen dataset SHALL be repeatable given the same model
-  identifier and the same cached model responses.
+#### Scenario: Strict type check
+- **GIVEN** the `src/triage/` package
+- **WHEN** `pyright --strict` runs
+- **THEN** it reports zero errors
+
+### Requirement: Classification Quality Target
+On the held-out split, the system SHALL achieve `issue_type` macro-F1 ≥ 0.75 and `severity`
+within-one-level agreement ≥ 0.85 against gold labels. These targets are evaluated, not
+unit-tested.
+
+#### Scenario: Evaluation on the held-out split
+- **GIVEN** the held-out split with gold labels
+- **WHEN** `triage eval` runs
+- **THEN** the report shows `issue_type` macro-F1 ≥ 0.75 and `severity` within-one-level
+  agreement ≥ 0.85
+
+### Requirement: Reproducible Runs
+Runs over the frozen dataset SHALL be repeatable given the same model identifier and the same
+cached model responses.
+
+#### Scenario: Rerun from cache
+- **GIVEN** a completed batch run and its cached model responses
+- **WHEN** the batch is rerun with the same `LLM_MODEL`
+- **THEN** every output record is identical to the first run
