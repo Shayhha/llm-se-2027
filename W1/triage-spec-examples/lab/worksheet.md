@@ -115,5 +115,5 @@ another meaning (which document or change).
 | I4 | | |
 | I5 | | |
 
-Where would you put this so that (a) the next `/opsx:propose` reads it and (b) something
+Where would you put this so that (a) the next `/openspec-propose` reads it and (b) something
 **checks** it automatically? ……………………
