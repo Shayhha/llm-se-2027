@@ -58,18 +58,21 @@ Large Language Models (LLMs) can act as assistants for product managers, signif
 
 ## Workflow
 
-We describe here a specific workflow to prepare and maintain the PRD of the product using LLMs based on using GitHub as a shared repository among the team.
+We describe here a first candidate workflow to prepare and maintain the PRD of a system using LLMs based on using GitHub as a shared repository among the team.  This is a first proposal.
+For our project, we will use [OpenSpec 2.0](OpenSpec%20Workflow%20Overview.md) which formalizes this workflow in a sustainable manner.
 
-1. We will store the PRD related files under a folder in the Repo named PRD.
-2. All the files will be stored in Markdown format (.md) [Why MD as format for LLMs](MDforLLM)
-3. We will start with the following files:
+1. Store the PRD related files under a folder in the Repo named PRD.
+2. All the files are stored in Markdown format (.md)
+3. We start with the following files:
 	1. **DraftPRD.md** - the high level ideas, brainstorming level.
 	2. **PRD.md** - the *live* PRD for the project - it will be updated over time using Pull Requests.
-4. We will then refine the toplevel PRD file into different perspectives:
+4. We then refine the toplevel PRD file into different perspectives:
 	1. **UserStories.md** - the user stories, broken down by user persona and features.
 	2. **DataModel.md** - the data model description
 	3. **Glossary.md** - the project terminology to be used consistently when describing functionality
 	4. **AcceptanceCriteria.md** - the list of criteria, KPIs and metrics that will be used to determine the product is ready for release.
+
+
 
 ## Using LLMs to Enhance Requirements
 
@@ -98,22 +101,3 @@ LLMs can simulate different perspectives to provide a multi-faceted review, whic
 ## Human in the Loop
 
 While LLMs offer benefits, especially for beginner product managers, human oversight remains crucial. Product managers must use LLMs as assistants, not replacements for critical thinking, user research, or final decision-making. LLMs may "mask unknowns" with generic content or produce overly rigid and detailed documents. This must be actively detected and pruned away.
-
-### GitHub/Spec-kit
-
-https://github.com/github/spec-kit is a toolkit that extends code agents with PRD editing capabilities. It introduces spec-specific commands such as:
-
-- `/speckit.constitution` Create principles focused on code quality, testing standards, user experience consistency, and performance requirements
-- `/speckit.specify` Build an application that can help me organize my photos in separate photo albums. Albums are grouped by date and can be re-organized by dragging and dropping on the main page. Albums are never in other nested albums. Within each album, photos are previewed in a tile-like interface.
-- `/speckit.plan` The application uses Vite with minimal number of libraries. Use vanilla HTML, CSS, and JavaScript as much as possible. Images are not uploaded anywhere and metadata is stored in a local SQLite database.
-
-Additional commands are available to manipulate specifications and break them down into tasks and implementation artifacts.
-
-| Command              | Description                                                                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `/speckit.tasks`     | Creates an actionable task list from your implementation plan.                                                                       |
-| `/speckit.clarify`   | Clarify underspecified areas (recommended before `/speckit.plan`)                                                                    |
-| `/speckit.analyze`   | Cross-artifact consistency & coverage analysis (run after `/speckit.tasks`, before `/speckit.implement`)                             |
-| `/speckit.checklist` | Generate custom quality checklists that validate requirements completeness, clarity, and consistency (like "unit tests for English") |
-| `/speckit.implement` | to execute all tasks and build your feature according to the plan.                                                                   |
-

@@ -20,7 +20,7 @@ severity, **so that** I don't have to read every issue in full to know whether i
 - Given an issue that already has GitHub labels, when it is triaged, then the labels are not
   used.
 
-*Size: M · Traces to: Enrichment Input Contract, Triage Record Schema · FR-E-01, FR-E-02*
+*Size: M · Traces to: Enrichment Input Contract, Triage Record Schema, Identity Fields from Input · FR-E-01, FR-E-02*
 
 ### US-02 Never act on malformed model output
 **As a** triage lead, **I want** model answers that don't fit the allowed values to be rejected
@@ -110,7 +110,7 @@ we can decide whether the system is good enough to rely on.
 - Given the held-out split, when evaluation runs, then it reports `issue_type` macro-F1 and
   `severity` within-one agreement, with the model identifier.
 
-*Size: M · Traces to: non-functional quality target · QR-01, QR-02*
+*Size: M · Traces to: Classification Quality Target · QR-01, QR-02*
 
 ---
 
@@ -118,7 +118,7 @@ we can decide whether the system is good enough to rely on.
 
 | Story | OpenSpec requirement(s) | SRS ID(s) | ADR |
 |---|---|---|---|
-| US-01 | Enrichment Input Contract; Triage Record Schema | FR-E-01, FR-E-02 | — |
+| US-01 | Enrichment Input Contract; Triage Record Schema; Identity Fields from Input | FR-E-01, FR-E-02 | — |
 | US-02 | Validation at the Model Boundary | FR-E-04 | 0002 |
 | US-03 | Bounded Retry and Explicit Failure; Enrichment Failures are Routed | FR-E-06, FR-R-06 | 0002 |
 | US-04 | Queue by Issue Type; SLA by Severity | FR-R-02, FR-R-03 | 0001 |
@@ -126,7 +126,7 @@ we can decide whether the system is good enough to rely on.
 | US-06 | Escalation | FR-R-05 | 0005 |
 | US-07 | Deterministic Routing; Routing Result | FR-R-01 | 0001 |
 | US-08 | Untrusted Issue Text | SR-01…03 | 0004 |
-| US-09 | (non-functional) | QR-01, QR-02 | 0003 |
+| US-09 | Classification Quality Target | QR-01, QR-02 | 0003 |
 
 ## What the stories leave open (for discussion)
 

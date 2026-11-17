@@ -18,7 +18,7 @@ async def run():
             tools = await session.list_tools()
 
             # Convert MCP tools to DSPy tools
-            dspy_tools = []
+            dspy_tools: list[dspy.Tool] = []
             for tool in tools.tools:
                 dspy_tools.append(dspy.Tool.from_mcp_tool(session, tool))
 

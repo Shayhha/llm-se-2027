@@ -84,16 +84,16 @@ flight_database = {
     ),
 }
 
-itinery_database = {}
-ticket_database = {}
+itinery_database: dict[str, Itinerary] = {}
+ticket_database: dict[str, Ticket] = {}
 
 
 @mcp.tool()
 def fetch_flight_info(date: Date, origin: str, destination: str) -> list[Flight]:
     """Fetch flight information from origin to destination on the given date"""
-    flights = []
+    flights: list[Flight] = []
 
-    for flight_id, flight in flight_database.items():
+    for flight in flight_database.values():
         if (
             flight.date_time.year == date.year
             and flight.date_time.month == date.month
@@ -124,7 +124,7 @@ def pick_flight(flights: list[Flight]):
     return sorted_flights[0]
 
 
-def generate_id(length=8):
+def generate_id(length: int = 8) -> str:
     chars = string.ascii_lowercase + string.digits
     return "".join(random.choices(chars, k=length))
 

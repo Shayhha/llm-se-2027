@@ -1,6 +1,6 @@
 ### GitHub/Spec-kit
 
-https://github.com/github/spec-kit is a toolkit that extends code agents with PRD editing capabilities.  It is particularly relevant to the method we want to adopt in our project and I recommend you use it, although you can work without it as well if you work out how to prompt the LLM to perform the requested tasks.
+https://github.com/github/spec-kit is a toolkit that extends code agents with PRD editing capabilities.  It is an alternative to OpenSpec.
 
 `spec-kit` introduces spec-specific commands such as:
 

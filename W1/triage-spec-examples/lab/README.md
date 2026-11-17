@@ -98,7 +98,7 @@ openspec instructions <artifact> --change <id>   template + instructions (propos
 | C2 | 8' | **Propose CR-1.** Run `openspec new change add-security-queue`. Write `proposal.md` (*Why / What Changes / Capabilities / Impact*) and one delta file per capability you touch, under `specs/<capability>/spec.md`. Use `## ADDED Requirements` for new requirements and `## MODIFIED Requirements` for changed ones. A MODIFIED block replaces the **whole** requirement, so copy it in full, then edit it. Every requirement needs at least one `#### Scenario:`. Reuse what you found in cycle 1. |
 | C3 | 3' | **Validate.** Run `openspec validate add-security-queue --strict` until it passes. You can ignore a remaining *"Requirement text is very long"* warning. Then run `openspec show add-security-queue --json --deltas-only`. In the worksheet, write down one problem `validate` caught and one problem in your change that it **cannot** catch. **Do not archive.** |
 
-*Finished early?* In a scratch copy, ask your coding agent `/opsx:propose` with the raw text of
+*Finished early?* In a scratch copy, ask your coding agent `/openspec-propose` with the raw text of
 CR-1. Diff its change against yours. What did the agent decide without asking you?
 
 ---

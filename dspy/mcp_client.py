@@ -25,10 +25,11 @@ class DSPyAirlineCustomerService(dspy.Signature):
 
 
 # dspy.configure(lm=dspy.LM("openai/gpt-4o-mini"))
-dspy.configure(lm=dspy.LM('xai/grok-3-mini'))
+# dspy.configure(lm=dspy.LM('xai/grok-3-mini'))
+dspy.configure(lm=dspy.LM('ollama/devstral'))
 
 
-async def run(user_request):
+async def run(user_request: str):
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             # Initialize the connection
@@ -37,7 +38,7 @@ async def run(user_request):
             tools = await session.list_tools()
 
             # Convert MCP tools to DSPy tools
-            dspy_tools = []
+            dspy_tools: list[dspy.Tool] = []
             for tool in tools.tools:
                 dspy_tools.append(dspy.Tool.from_mcp_tool(session, tool))
 
