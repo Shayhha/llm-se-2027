@@ -15,6 +15,12 @@
 
 | | |
 |---|---|
+| `git init` | create a new empty repository here (adds `.git/`); `clone` copies an existing one |
+| `git stash` / `-u` / `list` | shelve uncommitted changes / include untracked files / show the stack |
+| `git stash pop` / `apply` / `drop` | re-apply + remove / re-apply + keep / delete |
+| `git checkout <b>` / `-b <new>` | switch branch / create + switch |
+| `git checkout <commit>` / `-- <file>` | detached HEAD / discard a file's changes |
+| **checkout → switch + restore** | checkout was overloaded, so it was split: switch (branches), restore (files) |
 | `git switch -c <b>` | **create a branch and move into it** (`checkout -b`) |
 | `git switch <b>` | move to a branch |
 | `git add` → `git commit -m` | stage → save a snapshot |

@@ -19,16 +19,7 @@ production bug), the concepts behind git, and **DDD**. Plus Tuesday's lab once i
 | **Remote** (`origin`) | another copy of the repository, e.g. on GitHub |
 | **Tag** | a fixed name for a commit, e.g. a release `v1.2.0` |
 
-**The `.git` folder** holds everything:
-- `objects/`: all commits, trees and file contents;
-- `refs/`: branches and tags;
-- `HEAD`: where you are;
-- `index`: the staging area;
-- `config`: settings and remotes;
-- `logs/`: the reflog;
-- `hooks/`: scripts run on events.
-
-Delete it and the history is gone.
+**The `.git` folder** holds everything: `objects/` (all history), `refs/` (branches, tags), `HEAD`, `index` (staging), `config`, `logs/` (reflog), `hooks/`. Delete it and the history is gone.
 
 **Key facts:**
 - commits are **snapshots, not diffs**;
@@ -38,17 +29,56 @@ Delete it and the history is gone.
 ## 2. The everyday workflow
 
 ```bash
-git clone <url>                 # copy a remote repository
-git status                      # what changed? what is staged?
-git add <file>                  # stage changes      (git add . = everything)
-git commit -m "message"         # save a snapshot
-git pull                        # get others' changes (= fetch + merge)
-git push                        # send your commits to the remote
-git log --oneline --graph       # see the history
-git diff                        # unstaged changes  (git diff --staged = staged)
+git init               # new repo here (creates .git/)
+git clone <url>        # copy a remote repo
+git status             # what changed / is staged?
+git add <file>         # stage (git add . = all)
+git commit -m "msg"    # save a snapshot
+git pull               # get others' work (fetch+merge)
+git push               # send your commits
+git log --oneline      # history
+git diff [--staged]    # unstaged [staged] changes
 ```
 
 **`.gitignore`** lists files git must not track: build output, `.venv`, **`.env` with secrets**.
+
+### The three commands shown in class
+
+**`git init`:** creates an **empty repository** in the current folder by adding the hidden `.git/`
+folder. There are no commits yet; the first branch (`main` or `master`) appears with the first
+commit. Use **`git clone`** instead when the repository already exists remotely. `init` then
+`git remote add origin <url>` connects a new repository to GitHub.
+
+**`git stash`:** temporarily **shelves uncommitted changes** and leaves a clean working
+directory, e.g. to switch branches or pull.
+
+| Command | Does |
+|---|---|
+| `git stash` | save modified tracked files (staged and unstaged) and clean the working directory |
+| `git stash -u` | also include **untracked** (new) files |
+| `git stash push -m "msg"` | stash with a description |
+| `git stash list` | show all stashes: `stash@{0}` (newest), `stash@{1}`, … (a stack) |
+| `git stash pop` | re-apply the latest stash **and remove it** from the list |
+| `git stash apply` | re-apply **but keep** it in the list |
+| `git stash drop` / `clear` | delete one stash / all stashes |
+
+Stashes are local (never pushed). `pop` can cause a **conflict** if the files changed meanwhile.
+
+**`git checkout`:** the older, **overloaded** command that does several different things:
+
+| Form | Does | Newer equivalent |
+|---|---|---|
+| `git checkout <branch>` | switch to a branch | `git switch <branch>` |
+| `git checkout -b <new>` | **create a branch and switch to it** | `git switch -c <new>` |
+| `git checkout <commit>` | go to an old commit → **detached HEAD** | `git switch --detach <commit>` |
+| `git checkout -- <file>` | **discard** a file's uncommitted changes | `git restore <file>` |
+| `git checkout <branch> -- <file>` | take a file's version from another branch | `git restore --source <branch> <file>` |
+
+Git 2.23 split it into **`switch`** (branches) and **`restore`** (files), because one command doing
+unrelated things is confusing. That is the lecture's **ubiquitous-language** point.
+
+**Switching branches with uncommitted changes:** git refuses if they would be overwritten, so
+commit or **stash** first.
 
 ## 3. Branches
 
@@ -136,13 +166,7 @@ bug:
 
 ## 7. Git and the lecture's theme
 
-- **A great model:** a few concepts (commits, branches as pointers, HEAD, remotes) explain
-  everything else.
-- **A poor *language*: a counterexample of ubiquitous language.**
-  - `checkout` does unrelated things (switch branch, restore files, detach HEAD), which is why
-    `switch` and `restore` were added;
-  - `reset` has 3 modes;
-  - **index = staging area = cache** (three names for one concept).
+Git has a **great model** (commits, branches as pointers, HEAD, remotes) but a **poor language**, a counterexample of ubiquitous language: `checkout` is overloaded (hence `switch` / `restore`), `reset` has 3 modes, and **index = staging area = cache**.
 
 ---
 
@@ -174,23 +198,23 @@ and it must be **written down** (glossary, invariants, specs), not kept only in 
 
 ## Practice Q&A
 
-1. How do you create a new branch and move into it?<details><summary>Answer</summary>`git switch -c <name>` (or `git checkout -b <name>`).</details>
-2. What is a branch, and why are branches cheap?<details><summary>Answer</summary>A movable pointer to a commit (a small file holding a hash). Creating one copies nothing.</details>
-3. You're on your feature branch with unfinished work, and production has an urgent bug. What do you do?<details><summary>Answer</summary>Stash or WIP-commit your work → `git switch main` → `git pull` → `git switch -c hotfix/x` → fix and commit → push and PR into main → merge and deploy (tag) → back to your branch (`git stash pop`) → `git merge main` to get the fix.</details>
-4. Why create the hotfix from `main` and not from your feature branch?<details><summary>Answer</summary>main is what's in production; a branch off your feature would ship unfinished code with the fix.</details>
-5. What does `git stash` do?<details><summary>Answer</summary>Shelves uncommitted changes and cleans the working directory; `git stash pop` brings them back.</details>
-6. Merge vs rebase?<details><summary>Answer</summary>Merge joins histories with a merge commit (or fast-forward); rebase replays your commits on top as new commits for a linear history. Never rebase shared or pushed commits.</details>
-7. What is a merge conflict, and how do you resolve it?<details><summary>Answer</summary>Both sides changed the same lines. Edit the marked file, `git add` it, then `git commit` (or abort with `git merge --abort`).</details>
-8. fetch vs pull vs push?<details><summary>Answer</summary>fetch downloads without changing your branch; pull = fetch + merge; push sends your commits to the remote.</details>
-9. Reset vs revert?<details><summary>Answer</summary>Reset moves the branch back (rewrites history, local only). Revert adds a commit that undoes a change (safe after a push).</details>
-10. reset --soft vs --mixed vs --hard?<details><summary>Answer</summary>Soft keeps the changes staged; mixed (the default) keeps them unstaged; hard discards them.</details>
-11. How do you recover a commit you "lost" with a bad reset?<details><summary>Answer</summary>`git reflog` → find the hash → `git reset --hard <hash>`.</details>
-12. You committed to the wrong branch. Fix it.<details><summary>Answer</summary>Switch to the right branch and `git cherry-pick <hash>`, then remove the commit from the wrong branch (reset if not pushed, revert if pushed).</details>
-13. What is the `.git` folder?<details><summary>Answer</summary>The repository: all objects (history), refs (branches, tags), HEAD, the index, config, the reflog and hooks. Deleting it deletes the history.</details>
-14. What is HEAD, and what is a detached HEAD?<details><summary>Answer</summary>Your current position, usually a branch. Detached = pointing at a commit directly; new commits there belong to no branch.</details>
-15. What is `.gitignore` for?<details><summary>Answer</summary>Files git must not track: build output, virtual environments, secrets like `.env`.</details>
-16. Describe Git Flow and where hotfixes go.<details><summary>Answer</summary>main (production), develop (integration), feature/*, release/*; hotfix/* branches from main and merges back into main (and develop).</details>
-17. Why is git a counterexample of ubiquitous language?<details><summary>Answer</summary>Its commands are inconsistent: `checkout` does several unrelated things, `reset` has three modes, and the staging area has three names (index, cache).</details>
+1. What does `git init` do, and how is it different from `git clone`?<details><summary>Answer</summary>init creates a new, empty repository (the .git folder) in the current folder; clone copies an existing remote repository with its full history.</details>
+2. What does `git stash` do? `pop` vs `apply`?<details><summary>Answer</summary>Shelves uncommitted changes and cleans the working directory. pop re-applies the latest stash and removes it; apply re-applies but keeps it in the stash list.</details>
+3. When would you use `git stash`?<details><summary>Answer</summary>When you must switch branches or pull but your work isn't ready to commit, e.g. an urgent production bug while mid-feature.</details>
+4. Name three different things `git checkout` can do.<details><summary>Answer</summary>Switch to a branch (`checkout main`), create and switch (`checkout -b x`), go to a commit (detached HEAD), or discard a file's changes (`checkout -- file`).</details>
+5. Why were `git switch` and `git restore` introduced?<details><summary>Answer</summary>`checkout` was overloaded (branches and files); switch handles branches and restore handles files. One command per concept is the ubiquitous-language lesson.</details>
+6. How do you create a new branch and move into it?<details><summary>Answer</summary>`git switch -c <name>` (or `git checkout -b <name>`).</details>
+7. You're on your feature branch with unfinished work, and production has an urgent bug. What do you do?<details><summary>Answer</summary>Stash or WIP-commit your work → `git switch main` → `git pull` → `git switch -c hotfix/x` → fix and commit → push and PR into main → merge and deploy (tag) → back to your branch (`git stash pop`) → `git merge main` to get the fix.</details>
+8. Why create the hotfix from `main` and not from your feature branch?<details><summary>Answer</summary>main is what's in production; a branch off your feature would ship unfinished code with the fix.</details>
+9. Merge vs rebase?<details><summary>Answer</summary>Merge joins histories with a merge commit (or fast-forward); rebase replays your commits on top as new commits for a linear history. Never rebase shared or pushed commits.</details>
+10. What is a merge conflict, and how do you resolve it?<details><summary>Answer</summary>Both sides changed the same lines. Edit the marked file, `git add` it, then `git commit` (or abort with `git merge --abort`).</details>
+11. Reset vs revert?<details><summary>Answer</summary>Reset moves the branch back (rewrites history, local only). Revert adds a commit that undoes a change (safe after a push).</details>
+12. reset --soft vs --mixed vs --hard?<details><summary>Answer</summary>Soft keeps the changes staged; mixed (the default) keeps them unstaged; hard discards them.</details>
+13. How do you recover a commit you "lost" with a bad reset?<details><summary>Answer</summary>`git reflog` → find the hash → `git reset --hard <hash>`.</details>
+14. You committed to the wrong branch. Fix it.<details><summary>Answer</summary>Switch to the right branch and `git cherry-pick <hash>`, then remove the commit from the wrong branch (reset if not pushed, revert if pushed).</details>
+15. What is the `.git` folder?<details><summary>Answer</summary>The repository: all objects (history), refs (branches, tags), HEAD, the index, config, the reflog and hooks. Deleting it deletes the history.</details>
+16. What is HEAD, and what is a detached HEAD?<details><summary>Answer</summary>Your current position, usually a branch. Detached = pointing at a commit directly; new commits there belong to no branch.</details>
+17. Describe Git Flow and where hotfixes go.<details><summary>Answer</summary>main (production), develop (integration), feature/*, release/*; hotfix/* branches from main and merges back into main (and develop).</details>
 18. What is a domain model, and why does it matter more when agents write code?<details><summary>Answer</summary>A shared model of the domain's concepts, rules and vocabulary: the team's theory of the program. Code is cheap, so the model is the lasting asset, and agents guess anything it leaves out.</details>
 19. What is ubiquitous language? Give an example.<details><summary>Answer</summary>One agreed name per concept, used everywhere, including code. E.g. "severity" never called "priority"; inconsistent names make agents generate inconsistent code.</details>
 20. What is a bounded context?<details><summary>Answer</summary>A boundary inside which one model and its terms are consistent; the same word may mean something else elsewhere. It limits what an agent needs to know.</details>
