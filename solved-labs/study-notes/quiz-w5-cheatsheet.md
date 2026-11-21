@@ -53,10 +53,26 @@ commits.**
 **Remotes:** another repository · **fetch** updates `origin/main` · **pull** = fetch + merge ·
 **push** moves the remote's branch.
 
+**Nuances**
+
+| | |
+|---|---|
+| **Snapshots, not diffs** | each commit = a full tree; unchanged files reuse blobs; diffs are computed on demand |
+| **Renames / empty dirs** | renames aren't stored (detected heuristically); empty folders can't be tracked (`.gitkeep`) |
+| **Tree modes** | 100644 file · 100755 executable · 040000 dir · 120000 symlink |
+| **`.git/`** | HEAD, config, index, objects/, refs/, hooks/, logs/ (the reflog) |
+| **Tags** | lightweight = just a ref; annotated = a tag object (tagger, message) |
+| **Merge types** | fast-forward = move the ref; three-way = merge base + 2-parent commit |
+| **`~` / `^2` / `@{n}`** | n generations back / second parent / where HEAD was n moves ago |
+| **Dangling** | unreachable from any ref; `git fsck` finds them; `gc` deletes them later |
+| **Local only** | the reflog and the index are never pushed |
+| **Hashes** | same content = same blob hash everywhere; a re-made commit gets a new hash (time, parents); SHA-1 → SHA-256 |
+
 **DDD**
 
 | | |
 |---|---|
+| **Model as cognitive theory** | the domain model = the team's theory of the program (Naur); write it down when agents write the code |
 | **Ubiquitous language** | one name per concept everywhere; naming changes agent behaviour |
 | **Bounded context** | a consistent model inside a boundary; manages context |
 | **Anti-corruption layer** | translation that keeps foreign or agent-imported conventions out |

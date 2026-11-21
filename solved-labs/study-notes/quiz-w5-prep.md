@@ -131,10 +131,29 @@ garbage collection (unreachable objects are kept for about 2 weeks; reflog entri
 - **`pull`** = `fetch` + `merge` (or rebase).
 - **`push`:** upload objects and move the **remote's** branch.
 
-## 8. DDD: domain models (the other half of the lecture)
+## 8. Git nuances (likely trick questions)
+
+| Nuance | What to know |
+|---|---|
+| **Snapshots, not diffs** | every commit stores a **full snapshot** (a root tree). Unchanged files reuse the same blob hash, so this is cheap. Diffs are **computed on demand**; packfiles only *compress* with deltas. |
+| **Renames aren't stored** | git records only content and names; a rename is **detected heuristically** (similar content) when you ask for a diff or log |
+| **Empty folders can't be tracked** | a tree only lists blobs and sub-trees, so an empty directory has nothing to store (hence `.gitkeep` files) |
+| **Tree entry modes** | `100644` normal file · `100755` executable · `040000` sub-tree (directory) · `120000` symlink |
+| **The `.git` folder** | `HEAD`, `config`, `index` (the binary staging file), `objects/`, `refs/` (heads, tags, remotes), `hooks/`, `logs/` (the reflog) |
+| **Lightweight vs annotated tag** | lightweight = just a ref to a commit; annotated = a **tag object** (tagger, date, message) that the ref points to |
+| **Fast-forward vs three-way merge** | if your branch has no new commits, merge just **moves the ref** (fast-forward); otherwise git compares both tips with their **merge base** (the common ancestor) and creates a commit with **2 parents** |
+| **`HEAD~2` vs `HEAD^2` vs `HEAD@{2}`** | `~n` = n generations back (first parents); `^2` = the **second parent** of a merge; `@{n}` = where HEAD was n moves ago (**the reflog**) |
+| **Refspec** | the mapping between remote and local refs, e.g. `+refs/heads/*:refs/remotes/origin/*` (fetch remote branches into `origin/*`) |
+| **Reachable / dangling** | an object is reachable if some ref leads to it; otherwise it's **dangling** (`git fsck` finds them) and `gc` deletes it after a grace period |
+| **Who has the data** | a clone has the **full history** (every object); the reflog and the index are **local**, never pushed |
+| **SHA-1 → SHA-256** | git used SHA-1; newer git supports **SHA-256** repositories because of SHA-1 collision attacks |
+| **Hash identity** | the same file content gives the **same blob hash in every repository**; a commit hash also depends on its time, author and parents, so re-committing the same tree gives a **new** hash |
+
+## 9. DDD: domain models (the other half of the lecture)
 
 | Concept | Meaning |
 |---|---|
+| **Domain model as cognitive theory** | the model is the **theory of the program** in the team's heads (Naur, W1): how the code maps to the world and why. When agents write the code, that theory must be **written down and shared** (glossary, invariants, specs) or it is lost |
 | **Domain model** | a shared model of the problem's concepts and rules; valuable when **code is cheap** (agents write code; the model is what persists) |
 | **Ubiquitous language** | one agreed name per concept, used in talk, specs and code; **naming measurably changes agent behaviour** |
 | **Bounded context** | a boundary inside which a model and its terms are consistent; links to **information hiding** and to **managing an agent's context** |
@@ -150,7 +169,7 @@ garbage collection (unreachable objects are kept for about 2 weeks; reflog entri
 
 ---
 
-## 9. Hands-on practice (in a throwaway folder)
+## 10. Hands-on practice (in a throwaway folder)
 
 Run it in **Git Bash**. PowerShell's `echo` writes a different encoding, so the hashes would
 differ. Tested: `hello world` → blob `3b18e512…`.
@@ -203,4 +222,11 @@ git reset --hard HEAD@{1}      # it's back
 17. fetch vs pull vs push?<details><summary>Answer</summary>fetch downloads objects and updates the remote-tracking refs (origin/main); pull = fetch + merge (or rebase); push uploads objects and moves the remote's branch.</details>
 18. Revert vs reset?<details><summary>Answer</summary>Revert adds a new commit that undoes an old one (history kept, safe on shared branches); reset moves the branch pointer (rewrites history).</details>
 19. What is ubiquitous language, and why is git's command set a counterexample?<details><summary>Answer</summary>One agreed name per concept, used everywhere. Git's commands are inconsistent: `checkout` does several unrelated things, `reset` has three very different modes, and the index is also called the staging area and the cache.</details>
-20. What is a bounded context, and what is an anti-corruption layer?<details><summary>Answer</summary>A boundary within which one model and its terms are consistent; a translation layer that keeps a foreign model out of yours (in the course: protection against conventions an agent brings from its training data).</details>
+20. Does git store diffs or snapshots?<details><summary>Answer</summary>Snapshots: each commit points to a full root tree. Unchanged files reuse the same blob, so it is cheap. Diffs are computed when asked; packfiles only compress with deltas.</details>
+21. Why can't git track an empty directory, and how are renames handled?<details><summary>Answer</summary>A tree only lists blobs and sub-trees, so an empty folder has nothing to store (hence `.gitkeep`). Renames are not stored; git detects them heuristically from similar content.</details>
+22. Fast-forward vs three-way merge?<details><summary>Answer</summary>Fast-forward: the target has no new commits, so the ref just moves. Three-way: git uses the merge base (the common ancestor) of both tips and creates a commit with two parents.</details>
+23. What do `HEAD~2`, `HEAD^2` and `HEAD@{2}` mean?<details><summary>Answer</summary>Two first-parent generations back; the second parent of a merge commit; where HEAD was two moves ago (from the reflog).</details>
+24. Lightweight vs annotated tag?<details><summary>Answer</summary>Lightweight = only a ref to a commit; annotated = a tag object with tagger, date and message, which the ref points to.</details>
+25. What makes an object dangling, and what happens to it?<details><summary>Answer</summary>No ref leads to it (e.g. after reset or rebase). `git fsck` lists it; `gc` deletes it after a grace period, until which the reflog can recover it.</details>
+26. What does "domain model as cognitive theory" mean?<details><summary>Answer</summary>The domain model is the team's theory of the program (Naur): how the code maps to the world and why. With agents writing code, that theory must be made explicit and shared (glossary, invariants, specs), or it is lost.</details>
+27. What is a bounded context, and what is an anti-corruption layer?<details><summary>Answer</summary>A boundary within which one model and its terms are consistent; a translation layer that keeps a foreign model out of yours (in the course: protection against conventions an agent brings from its training data).</details>
