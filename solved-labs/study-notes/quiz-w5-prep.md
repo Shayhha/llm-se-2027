@@ -1,222 +1,189 @@
-# Quiz W5 prep: working with git + domain-driven design
+# Quiz W5 prep: git concepts + domain-driven design
 
-**Scope:** the W4 lecture: everyday git (branches, workflows, fixing mistakes, handling a
-production bug), the concepts behind git, and **DDD**. Plus Tuesday's lab once it's published.
+**Scope (syllabus, W4):** DDD principles and the **git case study**: git's basic concepts, the
+commands derived from them, and git as a ubiquitous-language counterexample. Plus **Tuesday's lab**
+(a mini git + disaster recovery, see section 8). Commands are given in the classic form
+(`checkout`, `reset`), as shown in class.
 
 ---
 
-## 1. How git works (just the concepts)
+## 1. Git's model: the basic concepts
+
+Git is a **content-addressed object store** plus a few **pointers** into it.
 
 | Concept | Meaning |
 |---|---|
-| **Repository** | the project + its full history, stored in the hidden **`.git` folder** |
-| **Commit** | a **snapshot** of the whole project at a moment, with a message, an author and a parent commit; identified by a **hash** |
-| **Branch** | a **movable pointer** to a commit, i.e. a line of work. Creating one is instant and cheap |
-| **HEAD** | **where you are now**, normally the current branch |
-| **Detached HEAD** | you checked out a commit, not a branch; new commits there belong to no branch |
-| **Working directory** | your files on disk |
-| **Staging area (index)** | what goes into the **next commit** (`git add` puts changes here) |
-| **Remote** (`origin`) | another copy of the repository, e.g. on GitHub |
-| **Tag** | a fixed name for a commit, e.g. a release `v1.2.0` |
+| **Content-addressed** | every object is stored under the **hash (SHA-1) of its content**. Same content → same hash; change one byte → a new hash. The hash is both the **name** and an **integrity check** |
+| **Blob** | the **content of one file** (no name, no date) |
+| **Tree** | a **directory listing**: names → blob hashes (files) and tree hashes (sub-folders) |
+| **Commit** | points to **one root tree** (the full snapshot) + **parent commit(s)** + author, date, message |
+| **DAG of commits** | commits point back to their parents, forming a **directed acyclic graph**. Objects are **immutable**: "changing" history creates new commits |
+| **Ref** | a **mutable pointer** (a name → a commit hash, a small file in `.git/refs/`) into the immutable DAG. A **branch** is a ref that **moves forward** when you commit (so creating one is instant); a **tag** never moves (`v1.2.0`) |
+| **HEAD** | **where you are**: usually points to a branch (`ref: refs/heads/main`) |
+| **Detached HEAD** | HEAD points **directly at a commit**, not a branch; new commits there are reachable from no branch |
+| **Remote** | **another repository** (e.g. `origin` on GitHub). `origin/main` = your last-known copy of its branch; `fetch` / `push` copy objects and update refs |
 
-**The `.git` folder** holds everything: `objects/` (all history), `refs/` (branches, tags), `HEAD`, `index` (staging), `config`, `logs/` (reflog), `hooks/`. Delete it and the history is gone.
+**The three trees:** **HEAD** (the last commit) · the **index** / staging area (the next commit) · the **working directory** (files on disk). `add` = working dir → index; `commit` = index → new commit + branch moves; `checkout` = commit → index + working dir.
 
-**Key facts:**
-- commits are **snapshots, not diffs**;
-- history **can't be changed silently**, because every commit's hash depends on its parent;
-- a commit is **almost never truly lost**: `git reflog` remembers.
+**The `.git` folder** is the repository: `objects/` (blobs, trees, commits), `refs/` (branches,
+tags, remote branches), `HEAD`, `index`, `config`, `logs/` (the reflog), `hooks/`. Delete it and
+the history is gone; the files on disk stay.
 
-## 2. The everyday workflow
+**Consequences:** commits are **snapshots, not diffs** (unchanged files reuse blobs); history **can't change silently** (a hash covers tree + parents); objects are only **added**, so a "lost" commit survives until garbage collection and the **reflog** finds it.
+
+## 2. Derived concepts: everything else is built from the model
+
+The syllabus point: stash, rebase, reset, cherry-pick and the reflog are **not new concepts**,
+just operations on objects and refs.
+
+| Command | In terms of the model |
+|---|---|
+| **`git stash`** | saves your uncommitted changes **as commits** (pointed to by the ref `refs/stash`), then resets the working dir and index to HEAD |
+| **`git reset <commit>`** | **moves the current branch ref** to `<commit>`. `--soft`: only the ref; `--mixed` (default): ref + index; `--hard`: ref + index + working dir |
+| **`git cherry-pick <c>`** | takes the **change** `<c>` introduced (its diff against its parent) and makes a **new commit** with it on the current branch (new hash) |
+| **`git rebase <base>`** | cherry-picks your commits one by one onto `<base>`, then **moves your branch ref** to the last new commit. The old commits still exist, unreferenced |
+| **`git merge <b>`** | creates a commit with **two parents** (or, if your branch is behind, just **moves the ref**: a fast-forward) |
+| **`git reflog`** | a **log of every value HEAD (and each branch) has pointed to**, local only. Since commits aren't deleted, it recovers anything a reset or rebase "lost" |
+| **`git revert <c>`** | a **new commit** with the inverse change; nothing is rewritten |
+
+## 3. Basic commands
 
 ```bash
-git init               # new repo here (creates .git/)
-git clone <url>        # copy a remote repo
-git status             # what changed / is staged?
-git add <file>         # stage (git add . = all)
-git commit -m "msg"    # save a snapshot
-git pull               # get others' work (fetch+merge)
-git push               # send your commits
-git log --oneline      # history
+git init               # new empty repo here (creates .git/)
+git clone <url>        # copy an existing repo with all history
+git status             # what changed / what is staged
+git add <file>         # stage (git add . = everything)
+git commit -m "msg"    # save a snapshot, branch moves
+git log --oneline      # history (--graph --all: the DAG)
 git diff [--staged]    # unstaged [staged] changes
+git fetch / pull       # get objects (pull = fetch + merge)
+git push               # send commits, update remote ref
+git remote add origin <url>   # connect to another repo
 ```
 
-**`.gitignore`** lists files git must not track: build output, `.venv`, **`.env` with secrets**.
+**`.gitignore`** lists what git must not track: build output, `.venv`, **`.env` with secrets**.
 
-### The three commands shown in class
+**`git checkout`** (the overloaded command):
 
-**`git init`:** creates an **empty repository** in the current folder by adding the hidden `.git/`
-folder. There are no commits yet; the first branch (`main` or `master`) appears with the first
-commit. Use **`git clone`** instead when the repository already exists remotely. `init` then
-`git remote add origin <url>` connects a new repository to GitHub.
-
-**`git stash`:** temporarily **shelves uncommitted changes** and leaves a clean working
-directory, e.g. to switch branches or pull.
-
-| Command | Does |
+| Form | Does |
 |---|---|
-| `git stash` | save modified tracked files (staged and unstaged) and clean the working directory |
-| `git stash -u` | also include **untracked** (new) files |
-| `git stash push -m "msg"` | stash with a description |
-| `git stash list` | show all stashes: `stash@{0}` (newest), `stash@{1}`, … (a stack) |
-| `git stash pop` | re-apply the latest stash **and remove it** from the list |
-| `git stash apply` | re-apply **but keep** it in the list |
-| `git stash drop` / `clear` | delete one stash / all stashes |
+| `git checkout <branch>` | **switch** to a branch (HEAD → that branch; files updated) |
+| `git checkout -b <new>` | **create a branch and switch to it** |
+| `git checkout <commit>` | go to an old commit → **detached HEAD** |
+| `git checkout -- <file>` | **discard** a file's uncommitted changes (copy it from the index) |
+| `git checkout <branch> -- <file>` | take a file's version from another branch |
 
-Stashes are local (never pushed). `pop` can cause a **conflict** if the files changed meanwhile.
+Git **refuses to switch** if uncommitted changes would be overwritten: commit or stash first.
 
-**`git checkout`:** the older, **overloaded** command that does several different things:
+**`git stash`:** shelve uncommitted changes (`-u`: include untracked files) · `stash list` (stack `stash@{0}`, `{1}`…) · **`pop`** = re-apply **and remove** · **`apply`** = re-apply **and keep** · `drop` / `clear`. Local only; `pop` can conflict.
 
-| Form | Does | Newer equivalent |
-|---|---|---|
-| `git checkout <branch>` | switch to a branch | `git switch <branch>` |
-| `git checkout -b <new>` | **create a branch and switch to it** | `git switch -c <new>` |
-| `git checkout <commit>` | go to an old commit → **detached HEAD** | `git switch --detach <commit>` |
-| `git checkout -- <file>` | **discard** a file's uncommitted changes | `git restore <file>` |
-| `git checkout <branch> -- <file>` | take a file's version from another branch | `git restore --source <branch> <file>` |
+**Undo:** unstage `git reset HEAD <file>` · redo the last commit `git commit --amend` (not if pushed) · undo last commit `git reset --soft HEAD~1` · undo a **pushed** commit `git revert <hash>`.
 
-Git 2.23 split it into **`switch`** (branches) and **`restore`** (files), because one command doing
-unrelated things is confusing. That is the lecture's **ubiquitous-language** point.
+## 4. Branches, merging, conflicts
 
-**Switching branches with uncommitted changes:** git refuses if they would be overwritten, so
-commit or **stash** first.
+**Create a branch and move into it: `git checkout -b feature/login`** · create only `git branch x` · move `git checkout main` · list `git branch -a` · delete `git branch -d x` · publish `git push -u origin x` · merge into current `git checkout main` → `git merge x`.
 
-## 3. Branches
+**Merge vs rebase:** true history (2-parent commit) vs linear history (rewritten commits); **never rebase commits others have**.
 
-| Task | Command |
-|---|---|
-| **Create a branch and move into it** | `git switch -c feature/login` (older form: `git checkout -b feature/login`) |
-| Create without moving | `git branch feature/login` |
-| Move to an existing branch | `git switch main` (or `git checkout main`) |
-| List branches | `git branch` (`-a` includes remote ones) |
-| Delete a merged branch | `git branch -d feature/login` |
-| Publish a new branch | `git push -u origin feature/login` |
-| Merge a branch into the current one | `git switch main` → `git merge feature/login` |
+**Conflict:** both sides changed the same lines; git marks them
+(`<<<<<<< HEAD` yours `=======` theirs `>>>>>>> feature`). Edit → `git add` → `git commit`
+(or `git rebase --continue`). Cancel with `git merge --abort` / `git rebase --abort`.
 
-**Why branches:** isolate work (a feature, a fix, an experiment) without breaking `main`, then
-integrate it through a **pull request (PR)** with code review.
+**Strategies:** feature branch + **PR** · **Git Flow** (`main`, `develop`, `feature/*`, `release/*`, **`hotfix/*` from `main`**) · **trunk-based** (short branches, CI).
 
-**Merge vs rebase:**
+## 5. Scenario: a production bug while you're on your own branch
 
-| | Merge | Rebase |
-|---|---|---|
-| What | joins two histories with a **merge commit** (or a **fast-forward** if there's nothing to join) | **replays** your commits on top of another branch, as **new** commits |
-| History | true, but with extra merge commits | linear and clean |
-| Rule | safe everywhere | **never rebase commits others already have** (shared or pushed branches) |
+You're on `feature/search` with **unfinished changes**; `main` (production) has an urgent bug.
 
-**Merge conflict:** both sides changed the same lines. Git marks them in the file:
-
-```
-<<<<<<< HEAD
-your version
-=======
-their version
->>>>>>> feature
-```
-
-Fix the file → `git add <file>` → `git commit` (or `git rebase --continue`). Undo the attempt
-with `git merge --abort`.
-
-## 4. Scenario: a bug in production while you work on your own branch
-
-You're on `feature/search` with **unfinished changes**, and production (`main`) has an urgent
-bug:
-
-1. **Save your unfinished work:** `git stash` (shelves the changes), **or** `git commit -m "WIP"`
-   on your branch.
-2. **Go to the production branch and update it:** `git switch main` → `git pull`
-3. **Create a hotfix branch from it:** `git switch -c hotfix/login-crash`
+1. **Save your work:** `git stash` (or `git commit -m "WIP"`).
+2. **Go to production and update:** `git checkout main` → `git pull`
+3. **Branch off it:** `git checkout -b hotfix/login-crash`
 4. **Fix, test, commit:** `git add …` → `git commit -m "Fix login crash"`
-5. **Push and open a PR into `main`:** `git push -u origin hotfix/login-crash` → review → merge →
-   deploy (often **tag** the release, e.g. `v1.2.1`).
-6. **Return to your work:** `git switch feature/search` → `git stash pop` (if you stashed).
-7. **Bring the fix into your branch too:** `git merge main` (or `git rebase main`, or
-   `git cherry-pick <fix-commit>` for one commit).
+5. **Push + PR into main:** `git push -u origin hotfix/login-crash` → review → merge → deploy,
+   tag `v1.2.1`.
+6. **Back to your work:** `git checkout feature/search` → `git stash pop`
+7. **Get the fix too:** `git merge main` (or `git cherry-pick <fix-hash>`).
 
-**Why this way:**
-- the hotfix starts from **what is actually in production**, not from your half-done feature;
-- your unfinished work isn't mixed into the fix;
-- the fix gets reviewed;
-- your branch ends up with the fix too, so the bug doesn't come back when you merge.
+**Why:** the fix starts from **what is in production**, not your half-done feature; your work isn't
+mixed in; the fix is reviewed; your branch gets the fix so it doesn't come back.
 
-## 5. Fixing mistakes
+## 6. Disaster recovery (the lab's second part)
 
-| Situation | Command | Note |
+| Disaster | What happened (model) | Recovery |
 |---|---|---|
-| Discard changes to a file (not staged) | `git restore <file>` | the changes are lost |
-| Unstage a file (keep the changes) | `git restore --staged <file>` | |
-| Fix the **last** commit's message or content | `git commit --amend` | rewrites the commit; don't if pushed |
-| Undo the last commit, **keep** the changes | `git reset --soft HEAD~1` | staged · (`--mixed`: unstaged) |
-| Undo the last commit and **throw away** the changes | `git reset --hard HEAD~1` | dangerous |
-| Undo a commit that's **already pushed** | `git revert <hash>` | adds a new "undo" commit; **safe for shared branches** |
-| Committed on the wrong branch | `git switch right-branch` → `git cherry-pick <hash>`, then remove it from the wrong branch | |
-| "Lost" a commit (bad reset or rebase) | `git reflog` → `git reset --hard <hash>` | the reflog lists every place HEAD has been |
-| Commits made in detached HEAD | `git switch -c save-it` (or find them in the reflog) | |
+| **Commits made in detached HEAD**, then checked out a branch | the commits exist, but **no ref** points to them | `git reflog` → find the hash → `git checkout -b rescue <hash>` (or `git branch rescue <hash>`) |
+| **Lost commits** after `git reset --hard` | the branch ref moved back; the commits are unreferenced | `git reflog` → `git reset --hard <hash>` |
+| **Botched rebase** | the branch now points to new, wrong commits; the old ones still exist | `git rebase --abort` while it runs; afterwards `git reflog` → `git reset --hard <branch>@{n}` (the pre-rebase position; also `ORIG_HEAD`) |
+| **Deleted a branch** | only the ref is gone | `git reflog` → `git branch <name> <hash>` |
 
-**Reset vs revert:**
-- **reset** moves the branch back and **rewrites history**: local only;
-- **revert** **adds** a commit that undoes the change, and history stays: safe after a push.
+**Lesson:** objects are immutable and only refs move, so recovery = find the old hash (reflog) and point a ref at it. **Uncommitted** discarded work can't be recovered (never an object); the reflog is local and expires.
 
-## 6. Branching strategies
+## 7. Git as a ubiquitous-language counterexample
 
-| Strategy | Idea |
-|---|---|
-| **Feature branch + PR** | every change on its own branch → pull request → review → merge to `main` |
-| **Git Flow** | `main` (production) · `develop` (integration) · `feature/*` · `release/*` · **`hotfix/*`** from `main` for urgent production bugs |
-| **Trunk-based** | short-lived branches merged to `main` often (daily), guarded by CI and feature flags |
-
-## 7. Git and the lecture's theme
-
-Git has a **great model** (commits, branches as pointers, HEAD, remotes) but a **poor language**, a counterexample of ubiquitous language: `checkout` is overloaded (hence `switch` / `restore`), `reset` has 3 modes, and **index = staging area = cache**.
+A **clean model** (objects, refs, HEAD, three trees) with an **inconsistent language**: `checkout` does unrelated things (hence `switch`/`restore` in Git 2.23), `reset` has 3 meanings and also unstages, **index = staging area = cache**, `pull` hides fetch + merge. Bad names → people **and agents** misuse the tool.
 
 ---
 
-## 8. Domain-Driven Design (DDD)
+## 8. Tuesday's lab (from the syllabus)
 
-**Domain model:** a shared model of the problem's concepts, rules and vocabulary.
+**Part 1: a mini git in ~100 lines**, implementing git's low-level ("**plumbing**") commands:
 
-**As cognitive theory:** it is the team's **theory of the program** (Naur, W1): how the code maps
-to the world and why. **When code is cheap** (agents write it), this model is the lasting asset,
-and it must be **written down** (glossary, invariants, specs), not kept only in people's heads.
+| Command | What it does |
+|---|---|
+| **`hash-object`** | computes a file's hash: SHA-1 of `"blob <size>\0" + content`, and (with `-w`) stores it zlib-compressed in `.git/objects/ab/cdef…` (first 2 hex chars = folder) |
+| **`cat-file`** | reads an object back by hash: its type (`-t`), size (`-s`) or content (`-p`) |
+| **`write-tree`** | turns the **index** into a tree object (and sub-trees) and prints its hash |
+| **`commit-tree`** | creates a commit from a tree hash + optional parent (`-p`) + message, prints its hash. It does **not** move any branch (`git update-ref` / `git commit` does that) |
+
+`git commit` = `write-tree` + `commit-tree` + moving the branch ref. "Porcelain" commands
+(add, commit, checkout) are built on these.
+
+**Part 2: deliberate disaster recovery:** detached HEAD, lost commits, botched rebase, recovery
+via the reflog (section 6).
+
+---
+
+## 9. Domain-Driven Design (DDD)
+
+**Domain model:** a shared model of the problem's concepts, rules and vocabulary. It is the
+team's **theory of the program** (Naur, W1). **When code is cheap** (agents write it), this model
+is the lasting asset, and it must be **written down** (glossary, invariants, specs).
 
 | Concept | Meaning | Example (our triage system) |
 |---|---|---|
-| **Ubiquitous language** | **one agreed name per concept**, used by everyone: in talk, specs and code. For agents it's a machine-readable interface: **names change what they generate** | "severity" means only how bad a bug is; never "priority" (W1 Exercise B's `ticket_priority` broke this) |
-| **Bounded context** | a boundary inside which a model and its terms are consistent; a term may mean something else in another context. Supports **information hiding** and keeps an **agent's context small** | "component" = a code folder in *routing*, but free text in *enrichment* |
-| **Anti-corruption layer (ACL)** | a **translation layer** that converts an outside model into yours, so its concepts don't leak in. Here: insulation against **conventions an agent imports from its training data** | validating LLM output into our `TriageRecord` (rejecting "High", `feature-request`) |
-| **Entity** | an object with an **identity** that persists while its data changes | an issue (repo + number) |
-| **Value object** | defined only by its **values**, no identity, usually immutable | a severity level; a routing result |
-| **Aggregate** | a cluster of objects changed together through one root, keeping **invariants** | a triage record with its rules (bugs have a severity) |
-| **Invariant** | a rule that must always hold | "every security issue goes to the security queue" (W2) |
+| **Ubiquitous language** | **one agreed name per concept**, everywhere: talk, specs, code. A **machine-readable interface**: **names measurably change what agents generate** | "severity" = how bad a bug is, never "priority" (W1's `ticket_priority` broke this) |
+| **Bounded context** | a boundary inside which one model's terms are consistent; the same word may mean something else elsewhere. Gives **information hiding** and a **small, focused agent context** | "component" = a code folder in *routing*, free text in *enrichment* |
+| **Anti-corruption layer (ACL)** | a **translation layer** that keeps an outside model from leaking into yours. Reinterpreted: insulation against **conventions the agent imports from its training data** | validating LLM output into our `TriageRecord` (rejecting "High", `feature-request`) |
+| **Entity** | has an **identity** that persists while its data changes | an issue (repo + number) |
+| **Value object** | defined only by its **values**, immutable | a severity level |
+| **Aggregate / invariant** | objects changed together through one root / a rule that always holds | "every security issue goes to the security queue" (W2) |
 
-**Why DDD matters with AI agents:**
-- agents **guess** whatever the model leaves unstated;
-- inconsistent names lead to inconsistent code;
-- a written glossary + invariants + clear boundaries give the agent the right context and catch
-  conflicts (the W2 spec lab).
+**With agents:** they guess what the model leaves unstated; a written glossary + boundaries give them the right context. Git's objects are a good domain model (a blob is a **value object**: identity = content); its command names break the ubiquitous language.
 
 ---
 
 ## Practice Q&A
 
-1. What does `git init` do, and how is it different from `git clone`?<details><summary>Answer</summary>init creates a new, empty repository (the .git folder) in the current folder; clone copies an existing remote repository with its full history.</details>
-2. What does `git stash` do? `pop` vs `apply`?<details><summary>Answer</summary>Shelves uncommitted changes and cleans the working directory. pop re-applies the latest stash and removes it; apply re-applies but keeps it in the stash list.</details>
-3. When would you use `git stash`?<details><summary>Answer</summary>When you must switch branches or pull but your work isn't ready to commit, e.g. an urgent production bug while mid-feature.</details>
-4. Name three different things `git checkout` can do.<details><summary>Answer</summary>Switch to a branch (`checkout main`), create and switch (`checkout -b x`), go to a commit (detached HEAD), or discard a file's changes (`checkout -- file`).</details>
-5. Why were `git switch` and `git restore` introduced?<details><summary>Answer</summary>`checkout` was overloaded (branches and files); switch handles branches and restore handles files. One command per concept is the ubiquitous-language lesson.</details>
-6. How do you create a new branch and move into it?<details><summary>Answer</summary>`git switch -c <name>` (or `git checkout -b <name>`).</details>
-7. You're on your feature branch with unfinished work, and production has an urgent bug. What do you do?<details><summary>Answer</summary>Stash or WIP-commit your work → `git switch main` → `git pull` → `git switch -c hotfix/x` → fix and commit → push and PR into main → merge and deploy (tag) → back to your branch (`git stash pop`) → `git merge main` to get the fix.</details>
-8. Why create the hotfix from `main` and not from your feature branch?<details><summary>Answer</summary>main is what's in production; a branch off your feature would ship unfinished code with the fix.</details>
-9. Merge vs rebase?<details><summary>Answer</summary>Merge joins histories with a merge commit (or fast-forward); rebase replays your commits on top as new commits for a linear history. Never rebase shared or pushed commits.</details>
-10. What is a merge conflict, and how do you resolve it?<details><summary>Answer</summary>Both sides changed the same lines. Edit the marked file, `git add` it, then `git commit` (or abort with `git merge --abort`).</details>
-11. Reset vs revert?<details><summary>Answer</summary>Reset moves the branch back (rewrites history, local only). Revert adds a commit that undoes a change (safe after a push).</details>
-12. reset --soft vs --mixed vs --hard?<details><summary>Answer</summary>Soft keeps the changes staged; mixed (the default) keeps them unstaged; hard discards them.</details>
-13. How do you recover a commit you "lost" with a bad reset?<details><summary>Answer</summary>`git reflog` → find the hash → `git reset --hard <hash>`.</details>
-14. You committed to the wrong branch. Fix it.<details><summary>Answer</summary>Switch to the right branch and `git cherry-pick <hash>`, then remove the commit from the wrong branch (reset if not pushed, revert if pushed).</details>
-15. What is the `.git` folder?<details><summary>Answer</summary>The repository: all objects (history), refs (branches, tags), HEAD, the index, config, the reflog and hooks. Deleting it deletes the history.</details>
-16. What is HEAD, and what is a detached HEAD?<details><summary>Answer</summary>Your current position, usually a branch. Detached = pointing at a commit directly; new commits there belong to no branch.</details>
-17. Describe Git Flow and where hotfixes go.<details><summary>Answer</summary>main (production), develop (integration), feature/*, release/*; hotfix/* branches from main and merges back into main (and develop).</details>
-18. What is a domain model, and why does it matter more when agents write code?<details><summary>Answer</summary>A shared model of the domain's concepts, rules and vocabulary: the team's theory of the program. Code is cheap, so the model is the lasting asset, and agents guess anything it leaves out.</details>
-19. What is ubiquitous language? Give an example.<details><summary>Answer</summary>One agreed name per concept, used everywhere, including code. E.g. "severity" never called "priority"; inconsistent names make agents generate inconsistent code.</details>
-20. What is a bounded context?<details><summary>Answer</summary>A boundary inside which one model and its terms are consistent; the same word may mean something else elsewhere. It limits what an agent needs to know.</details>
-21. What is an anti-corruption layer? Give an example.<details><summary>Answer</summary>A translation layer that keeps an outside model out of yours. E.g. validating LLM output into a strict TriageRecord, so the model's conventions don't leak in.</details>
-22. Entity vs value object?<details><summary>Answer</summary>An entity has an identity that persists while its data changes (an issue); a value object is defined only by its values (a severity level).</details>
+1. What does "content-addressed" mean in git?<details><summary>Answer</summary>Each object is stored and named by the hash of its content, so identical content gets the same hash and any change gives a new one. The hash is also an integrity check.</details>
+2. What are blobs, trees and commits?<details><summary>Answer</summary>Blob = a file's content; tree = a directory listing (names → blob/tree hashes); commit = a root tree + parent(s) + author, date and message.</details>
+3. What is a branch, in terms of the model? Why is creating one cheap?<details><summary>Answer</summary>A ref: a mutable pointer (a small file) holding a commit hash, which moves forward when you commit. Creating one only writes that file; nothing is copied.</details>
+4. What does "refs are mutable pointers into an immutable DAG" mean?<details><summary>Answer</summary>Commits (and all objects) never change and point to their parents, forming a DAG; only refs (branches, HEAD) change, by pointing to different commits.</details>
+5. What is HEAD? What is a detached HEAD, and what's the risk?<details><summary>Answer</summary>HEAD is where you are, normally a branch. Detached = pointing at a commit directly; new commits there are reachable from no branch and can be "lost" once you leave.</details>
+6. What are git's three trees, and what do `add` and `commit` do to them?<details><summary>Answer</summary>HEAD (last commit), the index (next commit), the working directory (files on disk). add copies working dir → index; commit makes the index a new commit and moves the branch.</details>
+7. What is a remote?<details><summary>Answer</summary>Another repository (e.g. origin on GitHub). Fetch/push copy objects between repositories and update refs; origin/main is your local copy of its branch.</details>
+8. Does git store diffs or snapshots? Why can't history be changed silently?<details><summary>Answer</summary>Snapshots (each commit has a full root tree; unchanged files reuse blobs). A commit's hash covers its tree and parents, so changing an old commit changes all later hashes.</details>
+9. Explain `git stash` in terms of the model. `pop` vs `apply`?<details><summary>Answer</summary>It saves uncommitted changes as commits under refs/stash and resets to HEAD. pop re-applies and removes the stash; apply re-applies and keeps it.</details>
+10. What does `git reset` really do? soft vs mixed vs hard?<details><summary>Answer</summary>Moves the current branch ref to another commit. soft: only the ref; mixed (default): ref + index; hard: ref + index + working directory.</details>
+11. What do cherry-pick and rebase do, and why do rebased commits get new hashes?<details><summary>Answer</summary>Cherry-pick re-applies one commit's change as a new commit; rebase cherry-picks a series onto a new base and moves the branch. New parents → new commit hashes, so never rebase commits others already have.</details>
+12. Reset vs revert?<details><summary>Answer</summary>Reset moves the branch back, rewriting history (local only). Revert adds a new commit undoing a change, so it's safe after pushing.</details>
+13. What is the reflog, and why can it recover "lost" commits?<details><summary>Answer</summary>A local log of every commit HEAD and each branch pointed to. Objects are never deleted right away, so you find the old hash and point a ref at it again.</details>
+14. You made commits in detached HEAD and then checked out main. Recover them.<details><summary>Answer</summary>`git reflog` → find the last commit's hash → `git checkout -b rescue <hash>` (or `git branch rescue <hash>`).</details>
+15. A rebase went wrong and finished. How do you undo it?<details><summary>Answer</summary>`git reflog` → find the branch's pre-rebase position → `git reset --hard <hash>` (or ORIG_HEAD). During the rebase: `git rebase --abort`.</details>
+16. Production has a bug while you're mid-feature. What do you do?<details><summary>Answer</summary>`git stash` → `git checkout main` → `git pull` → `git checkout -b hotfix/x` → fix and commit → push + PR into main → merge, deploy, tag → `git checkout feature` → `git stash pop` → `git merge main`. Branch from main: it's what's in production, not your unfinished work.</details>
+17. What do `hash-object`, `cat-file`, `write-tree` and `commit-tree` do?<details><summary>Answer</summary>Hash (and store) a file as a blob; read an object by hash; turn the index into a tree; create a commit from a tree + parent + message (without moving a branch).</details>
+18. Why is git a ubiquitous-language counterexample?<details><summary>Answer</summary>A clean model but inconsistent names: checkout does unrelated things, reset has three meanings, and index = staging area = cache.</details>
+19. What is a domain model, and why does it matter more when agents write code?<details><summary>Answer</summary>The shared concepts, rules and vocabulary: the team's theory of the program. Code is cheap, so the model is the lasting asset, and agents guess anything it leaves out.</details>
+20. What is ubiquitous language? Example?<details><summary>Answer</summary>One agreed name per concept, used everywhere including code; names measurably change agent output. E.g. "severity" never called "priority".</details>
+21. What is a bounded context, and how does it help AI context management?<details><summary>Answer</summary>A boundary inside which one model's terms are consistent. Like information hiding, it lets an agent work with only that context's model, keeping its context small.</details>
+22. What is an anti-corruption layer, reinterpreted for agents?<details><summary>Answer</summary>A translation layer keeping an outside model out of yours; for agents, insulation against conventions imported from training data (e.g. validating LLM output into a strict TriageRecord).</details>
+23. Entity vs value object? Which is a git blob?<details><summary>Answer</summary>An entity has a persisting identity (an issue); a value object is defined by its values (a severity). A blob is a value object: its identity is its content hash.</details>
