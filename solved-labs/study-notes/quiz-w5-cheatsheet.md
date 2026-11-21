@@ -1,79 +1,54 @@
-# Quiz W5 cheat sheet: git internals
+# Quiz W5 cheat sheet: git + DDD
 
-**Git = a content-addressed object store + refs (movable names) pointing into an immutable DAG of
-commits.**
-
-**Objects**
+**Concepts**
 
 | | |
 |---|---|
-| **Content-addressed** | object name = SHA-1 of `"type size\0" + content`; immutable |
-| **Storage** | zlib-compressed at `.git/objects/ab/cdef…` (2 + 38 hex characters); `gc` → packfiles |
-| **blob** | file content only (no name) |
-| **tree** | directory: (mode, name, hash) → blobs and trees |
-| **commit** | root tree + parent(s) + author + message; a merge has 2 parents |
-| **DAG** | commit hashes cover parents, so changing old history changes every later hash |
+| **Commit** | a snapshot of the project + message + parent; identified by a hash |
+| **Branch** | a movable pointer to a commit; cheap to create |
+| **HEAD / detached** | where you are (a branch) / pointing at a commit directly |
+| **Staging area (index)** | what goes into the next commit |
+| **Remote (`origin`)** | another copy of the repository (GitHub) |
+| **`.git/`** | the repository: objects (history), refs, HEAD, index, config, reflog, hooks |
 
-**Plumbing**
-
-| | |
-|---|---|
-| `hash-object [-w]` | file → blob hash (`-w` writes it) |
-| `cat-file -t/-s/-p` | an object's type / size / content |
-| `update-index --add` | file → index |
-| `write-tree` | index → tree |
-| `commit-tree <tree> -p <parent>` | tree → commit |
-| `update-ref` | move a branch |
-| **`git commit`** | = write-tree + commit-tree + update-ref |
-
-**Refs and trees**
+**Commands**
 
 | | |
 |---|---|
-| **Branch** | a file in `refs/heads/` holding a commit hash: a movable pointer |
-| **HEAD** | where you are; `ref: refs/heads/main` |
-| **Detached HEAD** | HEAD = a commit hash; new commits belong to no branch |
-| **Three trees** | HEAD (last commit) · index (next commit) · working directory (files) |
-| **reset --soft / --mixed / --hard** | move the branch / + reset the index / + reset the files |
+| `git switch -c <b>` | **create a branch and move into it** (`checkout -b`) |
+| `git switch <b>` | move to a branch |
+| `git add` → `git commit -m` | stage → save a snapshot |
+| `git pull` / `git push` | get others' work (fetch + merge) / send yours |
+| `git merge <b>` | join `<b>` into the current branch |
+| `git rebase <b>` | replay your commits on top of `<b>` (never on shared commits) |
+| `git stash` / `stash pop` | shelve unfinished work / bring it back |
+| `git cherry-pick <hash>` | copy one commit onto this branch |
+| `git restore <f>` / `--staged` | discard file changes / unstage |
+| `git commit --amend` | fix the last commit (before pushing) |
+| `git reset --soft/--mixed/--hard` | undo commits: keep staged / keep unstaged / discard |
+| `git revert <hash>` | a new commit undoing an old one: **safe after a push** |
+| `git reflog` | every place HEAD has been: recover "lost" commits |
 
-**Derived commands**
+**Production bug while on your feature branch**
 
-| | |
-|---|---|
-| **merge** | a commit with 2 parents, or a fast-forward (move the ref) |
-| **rebase** | replay commits as **new** commits on a new base |
-| **cherry-pick** | copy one commit's change as a new commit |
-| **revert** | a new commit undoing an old one (safe on shared branches) |
-| **stash** | uncommitted work saved as commits at `refs/stash` |
-| **reflog** | local log of every HEAD and branch position |
+`stash` (or a WIP commit) → `switch main` → `pull` → `switch -c hotfix/x` → fix + commit →
+`push` + PR into main → merge, deploy, tag → `switch` back → `stash pop` → `merge main`.
+Start from **main** = what's in production, not your unfinished feature.
 
-**Recovery:** `git reflog` → find the hash → `git reset --hard <hash>` or `git branch rescue <hash>`.
-`ORIG_HEAD` = before reset, rebase or merge. Commits stay until gc.
+**Conflicts:** fix the `<<<<<<< ======= >>>>>>>` markers → `git add` → `git commit`
+(`git merge --abort` cancels).
 
-**Remotes:** another repository · **fetch** updates `origin/main` · **pull** = fetch + merge ·
-**push** moves the remote's branch.
-
-**Nuances**
-
-| | |
-|---|---|
-| **Snapshots, not diffs** | each commit = a full tree; unchanged files reuse blobs; diffs are computed on demand |
-| **Renames / empty dirs** | renames aren't stored (detected heuristically); empty folders can't be tracked (`.gitkeep`) |
-| **Tree modes** | 100644 file · 100755 executable · 040000 dir · 120000 symlink |
-| **`.git/`** | HEAD, config, index, objects/, refs/, hooks/, logs/ (the reflog) |
-| **Tags** | lightweight = just a ref; annotated = a tag object (tagger, message) |
-| **Merge types** | fast-forward = move the ref; three-way = merge base + 2-parent commit |
-| **`~` / `^2` / `@{n}`** | n generations back / second parent / where HEAD was n moves ago |
-| **Dangling** | unreachable from any ref; `git fsck` finds them; `gc` deletes them later |
-| **Local only** | the reflog and the index are never pushed |
-| **Hashes** | same content = same blob hash everywhere; a re-made commit gets a new hash (time, parents); SHA-1 → SHA-256 |
+**Strategies:** feature branch + PR · **Git Flow** (main, develop, feature, release, **hotfix
+from main**) · trunk-based (short branches, CI).
 
 **DDD**
 
 | | |
 |---|---|
-| **Model as cognitive theory** | the domain model = the team's theory of the program (Naur); write it down when agents write the code |
-| **Ubiquitous language** | one name per concept everywhere; naming changes agent behaviour |
-| **Bounded context** | a consistent model inside a boundary; manages context |
-| **Anti-corruption layer** | translation that keeps foreign or agent-imported conventions out |
-| **Git counterexample** | great model, inconsistent commands: `checkout` overloaded, 3 `reset` modes, index = staging area = cache |
+| **Domain model** | the shared concepts, rules and vocabulary = the team's theory of the program (Naur); the lasting asset when code is cheap |
+| **Ubiquitous language** | one name per concept, everywhere; names change what agents generate (severity ≠ priority) |
+| **Bounded context** | a boundary where one model's terms are consistent; keeps an agent's context small |
+| **Anti-corruption layer** | translates an outside model (e.g. LLM output → strict TriageRecord) so it can't leak in |
+| **Entity / value object** | has a persisting identity (an issue) / defined by its values (a severity) |
+| **Aggregate / invariant** | objects changed together through one root / a rule that always holds |
+| **Git as the example** | a good model, an inconsistent language: `checkout` overloaded, 3 `reset` modes, index = staging = cache |
