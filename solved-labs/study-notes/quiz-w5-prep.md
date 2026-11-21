@@ -1,232 +1,178 @@
-# Quiz W5 prep: git internals
+# Quiz W5 prep: git internals + domain models
 
-**Scope:** the W4 lecture, *"Domain models as cognitive theory; git worked example"*, plus
-Tuesday's lab (to be added when it is published). Built from the syllabus topics and the assigned
-reading, **Pro Git, chapter 10 (Git Internals)**. The lecturer's own notes aren't public yet.
+**Scope:** the W4 lecture, *"Domain models as cognitive theory; git worked example"* (from the
+syllabus and the assigned reading, **Pro Git ch. 10**), plus Tuesday's lab once it's published.
 
-**The one idea:** git is a **content-addressed object store** (blobs, trees, commits) plus
-**refs**: movable names pointing into an **immutable graph (DAG)** of commits. Every other
-command (branch, reset, rebase, stash, cherry-pick, reflog) is **derived** from these few
-concepts.
-
----
+**The one idea:** git = a **content-addressed object store** (blobs, trees, commits) + **refs**
+(movable names) pointing into an **immutable DAG** of commits. Branch, reset, rebase, stash,
+cherry-pick and reflog are all **derived** from these.
 
 ## 1. The object store
-
-**Content-addressed:** every object is named by the **hash of its content** (SHA-1, 40 hex
-characters).
-- Same content → same name, so identical files are stored once.
-- Change the content → a different name, so **objects are immutable**: nothing is edited, new
-  objects are created.
 
 | Object | Stores | Points to |
 |---|---|---|
 | **blob** | a file's **content only** (no name, no permissions) | nothing |
-| **tree** | a **directory**: entries of (mode, name, hash) | blobs (files) and trees (sub-directories) |
-| **commit** | a **snapshot**: one root tree + parent commit(s) + author, committer, message | its tree and its parent(s) |
-| **tag** (annotated) | a name, a message and a tagger for one object | usually a commit |
+| **tree** | a **directory**: entries of (mode, name, hash) | blobs and trees |
+| **commit** | a **snapshot**: root tree + parent(s) + author, committer, message | its tree and parent(s) |
+| **tag** (annotated) | tagger, date, message for one object | usually a commit |
 
-**How an object is stored:**
-1. Build a header: `"<type> <size>\0"`, e.g. `blob 12\0`.
-2. Hash **header + content** with SHA-1. That hash is the object's ID.
-3. Compress (zlib) and save at `.git/objects/<first 2 chars>/<other 38 chars>`.
+- **Content-addressed:** an object's name = **SHA-1 of `"<type> <size>\0" + content`** (40 hex
+  characters). Same content → same name. **Objects are immutable**: changes create new objects.
+- **Stored** zlib-compressed at `.git/objects/ab/cdef…` (first 2 hex characters = the folder).
+  `git gc` packs loose objects into **packfiles** (delta-compressed).
+- **The DAG:** each commit points to its parent(s), and a merge has 2. A commit's hash covers its
+  tree and parents, so **changing old history changes every later hash**.
+- **Snapshots, not diffs:** each commit is a full tree, and unchanged files reuse the same blob.
+  Diffs are computed on demand.
+- **Renames aren't stored** (they're detected from similar content); **empty folders can't be
+  tracked** (a tree only holds blobs and trees, hence `.gitkeep`).
+- **Tree modes:** `100644` file · `100755` executable · `040000` directory · `120000` symlink.
 
-`hello world\n` as a blob always has the same ID on every machine.
+## 2. The `.git` folder
 
-**History is a DAG** (directed acyclic graph): each commit points to its parent(s). A merge commit
-has 2 parents. Because a commit's hash covers its tree and its parents, **changing any old commit
-changes every hash after it**. History can't be silently altered.
+| Entry | What it is |
+|---|---|
+| `HEAD` | where you are: `ref: refs/heads/main` (or a hash when detached) |
+| `config` | the repository's settings (remotes, branches, user) |
+| `index` | the **staging area**, a binary file: the proposed next commit |
+| `objects/` | **all objects** (blobs, trees, commits, tags): loose files + `pack/` |
+| `refs/heads/` | **branches**: one file per branch, holding a commit hash |
+| `refs/tags/`, `refs/remotes/` | tags; remote-tracking branches (`origin/main`) |
+| `logs/` | the **reflog**: the history of HEAD and branch positions |
+| `hooks/` | scripts run on events (e.g. `pre-commit`) |
+| `ORIG_HEAD` | HEAD before a reset, rebase or merge |
+| `packed-refs` | refs packed into one file (a performance detail) |
 
-**Loose objects vs packfiles:** new objects are stored one file each ("loose"); `git gc` packs
-them into **packfiles** with delta compression.
+The working directory is everything **outside** `.git`. Deleting `.git` deletes the repository
+and its history.
 
-## 2. Plumbing vs porcelain
+## 3. Plumbing vs porcelain
 
-- **Porcelain:** the friendly commands (`add`, `commit`, `checkout`, `merge`).
-- **Plumbing:** the low-level commands they're built on. The lab builds a mini git from these.
+**Porcelain** = user commands (`add`, `commit`, `merge`). **Plumbing** = the low-level commands
+they're built on; the lab's mini git implements these:
 
 | Command | Does |
 |---|---|
-| `git hash-object <file>` | computes a file's blob hash; with `-w`, also **writes** the blob to `.git/objects` |
-| `git cat-file -t / -s / -p <hash>` | an object's **type** / **size** / **content** (pretty-printed) |
-| `git update-index --add <file>` | puts a file into the **index** (staging area) |
-| `git write-tree` | turns the current **index into a tree** object, printing its hash |
-| `git commit-tree <tree> -p <parent> -m "msg"` | creates a **commit** object from a tree (+ parent) |
-| `git update-ref refs/heads/main <hash>` | moves a branch to a commit |
-| `git symbolic-ref HEAD refs/heads/main` | makes HEAD point to a branch |
+| `git hash-object [-w] <file>` | file → blob hash (`-w` also writes the object) |
+| `git cat-file -t / -s / -p <hash>` | an object's type / size / content |
+| `git update-index --add <file>` | file → index |
+| `git write-tree` | index → tree object |
+| `git commit-tree <tree> -p <parent> -m msg` | tree → commit object |
+| `git update-ref refs/heads/main <hash>` | move a branch |
 
-**`git commit` in plumbing:** `write-tree` → `commit-tree` (parent = current HEAD) →
-`update-ref` (move the branch to the new commit).
+**`git commit` = `write-tree` + `commit-tree`** (parent = HEAD) **+ `update-ref`** (move the branch).
 
-## 3. Refs and HEAD
+## 4. Refs, HEAD and the three trees
 
-- **A ref** is a **mutable name for a commit**: a small file containing a hash.
-  - **branch:** `.git/refs/heads/main`
-  - **tag:** `.git/refs/tags/v1.0`
-  - **remote-tracking branch:** `.git/refs/remotes/origin/main`
-- **A branch is just a movable pointer.** Creating one writes a 41-byte file. Committing moves the
-  current branch forward to the new commit.
-- **HEAD** is **where you are now**, normally a **symbolic ref** to a branch
-  (`ref: refs/heads/main`).
-- **Detached HEAD:** HEAD holds a **commit hash directly**, not a branch (e.g. after
-  `git checkout <hash>`). New commits there belong to **no branch** and are easy to lose. Use
-  `git switch -c <name>` to keep them.
-- **Immutable DAG, mutable refs:** objects never change; only the refs move. That's why almost
-  everything is recoverable.
+- **A ref** = a **mutable name** for a commit (a file holding a hash). **A branch** = a movable
+  pointer in `refs/heads/`; committing moves it forward.
+- **HEAD** = the current position, normally a **symbolic ref** to a branch. **Detached HEAD** =
+  HEAD holds a commit hash; new commits there belong to **no branch** (save them with
+  `git switch -c <name>`).
+- **Immutable objects, mutable refs:** only the pointers move, so almost everything can be
+  recovered.
+- **Tags:** lightweight = just a ref; annotated = a tag object the ref points to.
+- **Revision syntax:** `HEAD~2` = 2 generations back · `HEAD^2` = the second parent of a merge ·
+  `HEAD@{2}` = where HEAD was 2 moves ago (reflog).
 
-## 4. The three trees
+| Tree | What it is |
+|---|---|
+| **HEAD** | the last commit on the current branch |
+| **Index** (staging area) | the proposed next commit |
+| **Working directory** | the files on disk |
 
-| "Tree" | What it is | Moved by |
-|---|---|---|
-| **HEAD** | the last commit on the current branch | `commit`, `reset`, `checkout` |
-| **Index** (staging area) | the **proposed next commit** | `add`, `reset --mixed` |
-| **Working directory** | your files on disk | editing, `checkout`, `reset --hard` |
-
-**`git reset <commit>` moves the current branch, then optionally updates more trees:**
-
-| Mode | Moves HEAD/branch | Resets the index | Resets the working dir | Effect |
+| `git reset <commit>` | Branch | Index | Working dir | Result |
 |---|---|---|---|---|
-| `--soft` | ✓ | | | undo commits, keep changes **staged** |
-| `--mixed` (default) | ✓ | ✓ | | undo commits, keep changes **unstaged** |
-| `--hard` | ✓ | ✓ | ✓ | **discard** the changes too (dangerous) |
+| `--soft` | ✓ | | | changes stay **staged** |
+| `--mixed` (default) | ✓ | ✓ | | changes stay, **unstaged** |
+| `--hard` | ✓ | ✓ | ✓ | changes **discarded** |
 
-## 5. Derived concepts (built from objects + refs)
+## 5. Derived commands
 
 | Command | What it really does |
 |---|---|
-| **branch** | create a new ref pointing to a commit |
-| **merge** | a new commit with **two parents** (or a **fast-forward**: just move the ref) |
-| **rebase** | **replays** your commits onto a new base, creating **new commits** (new hashes); the old ones still exist |
-| **cherry-pick** | applies **one commit's change** as a **new commit** on the current branch |
-| **reset** | moves the branch pointer (+ index / working dir) |
-| **stash** | saves uncommitted work as **commits** referenced by `refs/stash`, then cleans the working dir |
-| **revert** | a **new commit** that undoes an earlier one (history is kept; safe on shared branches) |
-| **reflog** | a **local log of every position** HEAD and the branches have had |
-| **tag** | a fixed (non-moving) name for a commit |
+| **branch / tag** | create a ref (a moving one / a fixed one) |
+| **merge** | **fast-forward** (just move the ref) or **three-way** (merge base + both tips → a commit with **2 parents**) |
+| **rebase** | **replays** commits onto a new base as **new commits** (new hashes); the old ones remain |
+| **cherry-pick** | copies **one commit's change** as a new commit |
+| **revert** | a **new commit** that undoes an old one (safe on shared branches) |
+| **stash** | saves uncommitted work as **commits** at `refs/stash`, then cleans the working dir |
+| **reflog** | a **local** log of every HEAD and branch position |
 
-**Rewriting shared history is dangerous.** Rebase and amend create new commits; if others already
-have the old ones, histories diverge.
+**Rewriting shared history** (rebase, amend) is dangerous: others still have the old commits.
 
 ## 6. Disaster recovery
 
-**The rule:** a commit you made is **almost never lost**. It's still in `.git/objects` until
-garbage collection (unreachable objects are kept for about 2 weeks; reflog entries for 90 days).
+**A committed change is almost never lost.** The objects stay until `gc` (unreachable objects
+about 2 weeks, reflog entries 90 days).
 
 | Disaster | Recovery |
 |---|---|
-| **Bad `reset --hard`** | `git reflog` → find the old hash → `git reset --hard <hash>` |
-| **Botched rebase** | `git reflog` → the entry before the rebase → `git reset --hard <hash>` (or `ORIG_HEAD`) |
-| **Commits made in detached HEAD** | `git reflog` → `git branch rescue <hash>` |
-| **Deleted a branch** | `git reflog` (or the hash printed on delete) → `git branch <name> <hash>` |
-| **Lost stash** | `git fsck --lost-found` finds dangling commits |
+| Bad `reset --hard` | `git reflog` → find the hash → `git reset --hard <hash>` |
+| Botched rebase | `git reflog` → the entry before it → `reset --hard` (or `ORIG_HEAD`) |
+| Commits in detached HEAD | `git reflog` → `git branch rescue <hash>` |
+| Deleted branch | the hash from `git reflog` → `git branch <name> <hash>` |
+| Dropped stash | `git fsck --lost-found` finds **dangling** commits |
 
-- **`ORIG_HEAD`:** where HEAD was before a "dangerous" operation (reset, rebase, merge).
-- **The reflog is local:** it isn't pushed, and every clone has its own.
+**Dangling** = no ref leads to it. **The reflog and index are local**, never pushed.
 
 ## 7. Remotes
 
-- **A remote** is **just another repository** (a URL with a name, e.g. `origin`).
-- **`fetch`:** download objects and update the **remote-tracking refs** (`origin/main`). Your
-  branches don't change.
-- **`pull`** = `fetch` + `merge` (or rebase).
-- **`push`:** upload objects and move the **remote's** branch.
+**A remote is just another repository.**
+- `fetch` downloads objects and updates **remote-tracking refs** (`origin/main`).
+- `pull` = fetch + merge (or rebase).
+- `push` uploads objects and moves the remote's branch.
 
-## 8. Git nuances (likely trick questions)
+A **refspec** maps remote refs to local ones (`refs/heads/*:refs/remotes/origin/*`). A clone has
+the **full history**.
 
-| Nuance | What to know |
-|---|---|
-| **Snapshots, not diffs** | every commit stores a **full snapshot** (a root tree). Unchanged files reuse the same blob hash, so this is cheap. Diffs are **computed on demand**; packfiles only *compress* with deltas. |
-| **Renames aren't stored** | git records only content and names; a rename is **detected heuristically** (similar content) when you ask for a diff or log |
-| **Empty folders can't be tracked** | a tree only lists blobs and sub-trees, so an empty directory has nothing to store (hence `.gitkeep` files) |
-| **Tree entry modes** | `100644` normal file · `100755` executable · `040000` sub-tree (directory) · `120000` symlink |
-| **The `.git` folder** | `HEAD`, `config`, `index` (the binary staging file), `objects/`, `refs/` (heads, tags, remotes), `hooks/`, `logs/` (the reflog) |
-| **Lightweight vs annotated tag** | lightweight = just a ref to a commit; annotated = a **tag object** (tagger, date, message) that the ref points to |
-| **Fast-forward vs three-way merge** | if your branch has no new commits, merge just **moves the ref** (fast-forward); otherwise git compares both tips with their **merge base** (the common ancestor) and creates a commit with **2 parents** |
-| **`HEAD~2` vs `HEAD^2` vs `HEAD@{2}`** | `~n` = n generations back (first parents); `^2` = the **second parent** of a merge; `@{n}` = where HEAD was n moves ago (**the reflog**) |
-| **Refspec** | the mapping between remote and local refs, e.g. `+refs/heads/*:refs/remotes/origin/*` (fetch remote branches into `origin/*`) |
-| **Reachable / dangling** | an object is reachable if some ref leads to it; otherwise it's **dangling** (`git fsck` finds them) and `gc` deletes it after a grace period |
-| **Who has the data** | a clone has the **full history** (every object); the reflog and the index are **local**, never pushed |
-| **SHA-1 → SHA-256** | git used SHA-1; newer git supports **SHA-256** repositories because of SHA-1 collision attacks |
-| **Hash identity** | the same file content gives the **same blob hash in every repository**; a commit hash also depends on its time, author and parents, so re-committing the same tree gives a **new** hash |
-
-## 9. DDD: domain models (the other half of the lecture)
+## 8. Domain models (DDD)
 
 | Concept | Meaning |
 |---|---|
-| **Domain model as cognitive theory** | the model is the **theory of the program** in the team's heads (Naur, W1): how the code maps to the world and why. When agents write the code, that theory must be **written down and shared** (glossary, invariants, specs) or it is lost |
-| **Domain model** | a shared model of the problem's concepts and rules; valuable when **code is cheap** (agents write code; the model is what persists) |
-| **Ubiquitous language** | one agreed name per concept, used in talk, specs and code; **naming measurably changes agent behaviour** |
-| **Bounded context** | a boundary inside which a model and its terms are consistent; links to **information hiding** and to **managing an agent's context** |
-| **Anti-corruption layer** | a translation layer that keeps a foreign model out of yours; reinterpreted as **insulation against conventions an agent imports from its training data** |
+| **Domain model as cognitive theory** | the model is the team's **theory of the program** (Naur, W1). When agents write the code, it must be written down and shared (glossary, invariants, specs) |
+| **Why it matters now** | code is cheap; the shared model is the lasting asset |
+| **Ubiquitous language** | one name per concept, everywhere; a machine-readable interface, since **naming measurably changes agent behaviour** |
+| **Bounded context** | a boundary inside which one model and its terms are consistent; information hiding; managing an agent's context |
+| **Anti-corruption layer** | a translation layer that keeps a foreign model out; here, insulation against **conventions an agent imports from its training data** |
+| **Git as the example** | an **excellent model** (4 object types + refs) with **inconsistent commands**: `checkout` overloaded (branch, files, detach), `reset` with 3 modes, and **index = staging area = cache** |
 
-**Git as the course's example:**
-- its **internal model is excellent**: 4 object types + refs explain everything;
-- its **command language is a counterexample of ubiquitous language**:
-  - `checkout` does several unrelated things (switch branch, restore files, detach HEAD), which
-    is why `switch` and `restore` were added later;
-  - `reset` has three modes with very different effects;
-  - the same thing has **three names**: index = staging area = cache.
-
----
-
-## 10. Hands-on practice (in a throwaway folder)
-
-Run it in **Git Bash**. PowerShell's `echo` writes a different encoding, so the hashes would
-differ. Tested: `hello world` → blob `3b18e512…`.
+## 9. Try it (Git Bash, throwaway folder; tested)
 
 ```bash
-mkdir gitlab && cd gitlab && git init
-echo "hello world" > a.txt
-git hash-object a.txt          # prints the blob hash (same on every machine)
-git hash-object -w a.txt       # also writes it into .git/objects
-find .git/objects -type f      # .git/objects/3b/18e5... : 2 chars / 38 chars
-git cat-file -t 3b18e5         # blob
-git cat-file -p 3b18e5         # hello world
-git update-index --add a.txt   # stage it
-git write-tree                 # prints a tree hash
-git cat-file -p <tree>         # 100644 blob 3b18e5...  a.txt
-git commit-tree <tree> -m "first"     # prints a commit hash
-git update-ref refs/heads/main <commit>   # now `git log` shows it
-cat .git/HEAD                  # ref: refs/heads/main
-```
-
-**Disaster drill:**
-
-```bash
-echo two > b.txt && git add b.txt && git commit -m two
-git reset --hard HEAD~1        # "lose" the commit
-git reflog                     # find "commit: two"
-git reset --hard HEAD@{1}      # it's back
+git init demo && cd demo && echo "hello world" > a.txt
+git hash-object -w a.txt        # 3b18e512... → .git/objects/3b/18e512...
+git cat-file -p 3b18e5          # hello world
+git update-index --add a.txt && git write-tree          # → a tree hash
+git commit-tree <tree> -m first                          # → a commit hash
+git update-ref refs/heads/main <commit> && git log --oneline
+git reset --hard HEAD~1 ; git reflog ; git reset --hard HEAD@{1}   # lose and recover
 ```
 
 ---
 
 ## Practice Q&A
 
-1. What does "content-addressed" mean in git?<details><summary>Answer</summary>Every object is named by the hash of its content, so identical content has the same name, and changing content gives a new object. Objects are immutable.</details>
-2. Name git's object types and what each stores.<details><summary>Answer</summary>Blob: a file's content (no name). Tree: a directory, i.e. (mode, name, hash) entries pointing to blobs and trees. Commit: a root tree + parent(s) + author and message. (Annotated tag: a named pointer with a message.)</details>
-3. Where is a filename stored: in the blob or the tree? Why?<details><summary>Answer</summary>In the tree. A blob is pure content, so the same content under two names is stored once.</details>
-4. How is an object's hash computed and stored?<details><summary>Answer</summary>SHA-1 of the header "type size\0" + the content; the result is zlib-compressed and saved at .git/objects/xx/yyyy… (the first 2 hex characters form the folder).</details>
-5. Why can't history be changed silently?<details><summary>Answer</summary>A commit's hash covers its tree and its parents' hashes, so changing any old commit changes every hash after it.</details>
-6. Plumbing vs porcelain: give two plumbing commands and what they do.<details><summary>Answer</summary>Porcelain = user commands; plumbing = low-level ones. `hash-object` hashes or writes a blob; `cat-file` reads an object; `write-tree` index → tree; `commit-tree` tree → commit.</details>
-7. Which plumbing steps does `git commit` perform?<details><summary>Answer</summary>write-tree (index → tree), commit-tree (with the current HEAD as parent), and update-ref (move the branch to the new commit).</details>
-8. What is a branch, physically?<details><summary>Answer</summary>A file under .git/refs/heads containing a commit hash: a movable pointer. Committing moves it forward.</details>
-9. What is HEAD? What is a detached HEAD, and what is its risk?<details><summary>Answer</summary>HEAD is where you are: normally a symbolic ref to a branch. Detached = HEAD holds a commit hash directly; new commits belong to no branch and can be lost when you switch away.</details>
-10. What are the three trees?<details><summary>Answer</summary>HEAD (the last commit), the index (staging area: the proposed next commit) and the working directory (the files on disk).</details>
-11. reset --soft vs --mixed vs --hard?<details><summary>Answer</summary>All move the branch. Soft keeps the changes staged; mixed (the default) also resets the index, so changes are unstaged; hard also resets the working directory, discarding the changes.</details>
-12. Merge vs rebase?<details><summary>Answer</summary>Merge creates a commit with two parents (or fast-forwards the ref). Rebase replays commits onto a new base as new commits with new hashes; the old commits remain until gc.</details>
-13. What does cherry-pick do?<details><summary>Answer</summary>Applies one commit's change as a new commit on the current branch.</details>
-14. What is the reflog, and how do you recover a lost commit?<details><summary>Answer</summary>A local log of every position HEAD and the branches had. Find the hash in `git reflog`, then `git reset --hard <hash>` or `git branch <name> <hash>`.</details>
-15. How do you undo a botched rebase?<details><summary>Answer</summary>`git reflog` → the entry before the rebase → `git reset --hard <hash>`, or `git reset --hard ORIG_HEAD`.</details>
-16. Why are "lost" commits usually recoverable?<details><summary>Answer</summary>Objects are immutable and stay in .git/objects; only refs moved. They are removed only by garbage collection after a grace period.</details>
-17. fetch vs pull vs push?<details><summary>Answer</summary>fetch downloads objects and updates the remote-tracking refs (origin/main); pull = fetch + merge (or rebase); push uploads objects and moves the remote's branch.</details>
-18. Revert vs reset?<details><summary>Answer</summary>Revert adds a new commit that undoes an old one (history kept, safe on shared branches); reset moves the branch pointer (rewrites history).</details>
-19. What is ubiquitous language, and why is git's command set a counterexample?<details><summary>Answer</summary>One agreed name per concept, used everywhere. Git's commands are inconsistent: `checkout` does several unrelated things, `reset` has three very different modes, and the index is also called the staging area and the cache.</details>
-20. Does git store diffs or snapshots?<details><summary>Answer</summary>Snapshots: each commit points to a full root tree. Unchanged files reuse the same blob, so it is cheap. Diffs are computed when asked; packfiles only compress with deltas.</details>
-21. Why can't git track an empty directory, and how are renames handled?<details><summary>Answer</summary>A tree only lists blobs and sub-trees, so an empty folder has nothing to store (hence `.gitkeep`). Renames are not stored; git detects them heuristically from similar content.</details>
-22. Fast-forward vs three-way merge?<details><summary>Answer</summary>Fast-forward: the target has no new commits, so the ref just moves. Three-way: git uses the merge base (the common ancestor) of both tips and creates a commit with two parents.</details>
-23. What do `HEAD~2`, `HEAD^2` and `HEAD@{2}` mean?<details><summary>Answer</summary>Two first-parent generations back; the second parent of a merge commit; where HEAD was two moves ago (from the reflog).</details>
-24. Lightweight vs annotated tag?<details><summary>Answer</summary>Lightweight = only a ref to a commit; annotated = a tag object with tagger, date and message, which the ref points to.</details>
-25. What makes an object dangling, and what happens to it?<details><summary>Answer</summary>No ref leads to it (e.g. after reset or rebase). `git fsck` lists it; `gc` deletes it after a grace period, until which the reflog can recover it.</details>
-26. What does "domain model as cognitive theory" mean?<details><summary>Answer</summary>The domain model is the team's theory of the program (Naur): how the code maps to the world and why. With agents writing code, that theory must be made explicit and shared (glossary, invariants, specs), or it is lost.</details>
-27. What is a bounded context, and what is an anti-corruption layer?<details><summary>Answer</summary>A boundary within which one model and its terms are consistent; a translation layer that keeps a foreign model out of yours (in the course: protection against conventions an agent brings from its training data).</details>
+1. What is the `.git` folder, and what are its main parts?<details><summary>Answer</summary>The repository itself: HEAD (the current position), config, index (staging), objects/ (all objects), refs/ (branches, tags, remotes), logs/ (the reflog), hooks/. Everything outside it is the working directory.</details>
+2. What does "content-addressed" mean?<details><summary>Answer</summary>An object's name is the SHA-1 of its content (with a "type size\0" header), so the same content gives the same name and objects are immutable.</details>
+3. Name the object types and what each stores.<details><summary>Answer</summary>Blob = file content; tree = directory (mode, name, hash); commit = root tree + parents + metadata; annotated tag = a named pointer with a message.</details>
+4. Is a filename stored in the blob or the tree?<details><summary>Answer</summary>In the tree; a blob is pure content, so identical files are stored once.</details>
+5. Does git store diffs or snapshots?<details><summary>Answer</summary>Snapshots (a full tree per commit, reusing unchanged blobs); diffs are computed on demand.</details>
+6. Why can't old history be changed silently?<details><summary>Answer</summary>A commit's hash covers its tree and parents, so changing any old commit changes every later hash.</details>
+7. Which plumbing steps make up `git commit`?<details><summary>Answer</summary>write-tree (index → tree), commit-tree (parent = HEAD), update-ref (move the branch).</details>
+8. What do `hash-object` and `cat-file` do?<details><summary>Answer</summary>hash-object computes (and with -w writes) a blob; cat-file shows an object's type (-t), size (-s) or content (-p).</details>
+9. What is a branch, physically?<details><summary>Answer</summary>A file in .git/refs/heads holding a commit hash: a movable pointer.</details>
+10. What is HEAD, and what is a detached HEAD?<details><summary>Answer</summary>HEAD is the current position, normally a symbolic ref to a branch. Detached = it holds a commit hash, so new commits belong to no branch.</details>
+11. What are the three trees?<details><summary>Answer</summary>HEAD (last commit), index (staging, the next commit), working directory (files on disk).</details>
+12. reset --soft vs --mixed vs --hard?<details><summary>Answer</summary>All move the branch; soft keeps changes staged; mixed also resets the index (unstaged); hard also resets the files (discards).</details>
+13. Merge (fast-forward vs three-way) vs rebase?<details><summary>Answer</summary>Fast-forward moves the ref; three-way uses the merge base and makes a 2-parent commit; rebase replays commits as new commits on a new base.</details>
+14. Cherry-pick vs revert vs stash?<details><summary>Answer</summary>Cherry-pick copies one commit's change as a new commit; revert adds a commit undoing an old one; stash saves uncommitted work as commits at refs/stash.</details>
+15. What is the reflog, and how do you recover a lost commit?<details><summary>Answer</summary>A local log of HEAD and branch positions. Find the hash in `git reflog`, then `git reset --hard <hash>` or `git branch <name> <hash>`.</details>
+16. How do you undo a botched rebase?<details><summary>Answer</summary>`git reflog` → the entry before the rebase → `git reset --hard` it (or `ORIG_HEAD`).</details>
+17. What is a dangling object, and when is it deleted?<details><summary>Answer</summary>An object no ref leads to; `git fsck` finds it, and `gc` deletes it after a grace period.</details>
+18. `HEAD~2` vs `HEAD^2` vs `HEAD@{2}`?<details><summary>Answer</summary>Two generations back; the second parent of a merge; where HEAD was two moves ago.</details>
+19. fetch vs pull vs push?<details><summary>Answer</summary>fetch updates origin/* only; pull = fetch + merge; push uploads and moves the remote's branch.</details>
+20. Why can't git track an empty folder, and how are renames handled?<details><summary>Answer</summary>A tree only lists blobs and trees; renames aren't stored but detected from similar content.</details>
+21. What does "domain model as cognitive theory" mean?<details><summary>Answer</summary>The model is the team's theory of the program (Naur); with agents writing code it must be made explicit and shared.</details>
+22. What is ubiquitous language, and why is git a counterexample?<details><summary>Answer</summary>One name per concept, everywhere. Git's commands are inconsistent: `checkout` is overloaded, `reset` has 3 modes, index = staging area = cache.</details>
+23. Bounded context vs anti-corruption layer?<details><summary>Answer</summary>A boundary where one model's terms are consistent; a translation layer that keeps a foreign model (or an agent's habits) out.</details>
