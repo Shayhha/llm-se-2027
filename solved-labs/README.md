@@ -24,7 +24,7 @@ lab work lives here, one folder per week.
 
 | Path | What it is |
 |---|---|
-| [`study-notes/`](study-notes/) | My study notes for the quizzes: [`quiz-w4-prep.md`](study-notes/quiz-w4-prep.md) + [`quiz-w4-cheatsheet.md`](study-notes/quiz-w4-cheatsheet.md) (week-4 quiz: LLMs notes, focus on 01, 02, 03, 06, 06.5 + DSPy essentials), [`quiz-w3-prep.md`](study-notes/quiz-w3-prep.md) (week-3 quiz: Foundation Models lecture + W2 lab), [`reading-w1-w2.md`](study-notes/reading-w1-w2.md) (all W1–W2 material, explained), [`quiz-prep-w1-w2.md`](study-notes/quiz-prep-w1-w2.md) (summary + 35 practice questions with answers) and [`labs-practice-guide.md`](study-notes/labs-practice-guide.md) (index of each lab's `PRACTICE.md` + themes across labs) |
+| [`study-notes/`](study-notes/) | My study notes for the quizzes: [`quiz-w5-prep.md`](study-notes/quiz-w5-prep.md) + [`quiz-w5-cheatsheet.md`](study-notes/quiz-w5-cheatsheet.md) (week-5 quiz: git internals + DDD), [`quiz-w4-prep.md`](study-notes/quiz-w4-prep.md) + [`quiz-w4-cheatsheet.md`](study-notes/quiz-w4-cheatsheet.md) (week-4 quiz: LLMs notes, focus on 01, 02, 03, 06, 06.5 + DSPy essentials), [`quiz-w3-prep.md`](study-notes/quiz-w3-prep.md) (week-3 quiz: Foundation Models lecture + W2 lab), [`reading-w1-w2.md`](study-notes/reading-w1-w2.md) (all W1â€“W2 material, explained), [`quiz-prep-w1-w2.md`](study-notes/quiz-prep-w1-w2.md) (summary + 35 practice questions with answers) and [`labs-practice-guide.md`](study-notes/labs-practice-guide.md) (index of each lab's `PRACTICE.md` + themes across labs) |
 | [`W1/`](W1/) | The W1 lab ([melhadad/llm-se-2027-w1-lab](https://github.com/melhadad/llm-se-2027-w1-lab)). **Start with [`W1/TAKEAWAYS.md`](W1/TAKEAWAYS.md); practise with [`W1/PRACTICE.md`](W1/PRACTICE.md).** |
 | [`W2/`](W2/) | The W2 lab preparation and the in-class specifications lab. **Start with [`W2/TAKEAWAYS.md`](W2/TAKEAWAYS.md); practise with [`W2/PRACTICE.md`](W2/PRACTICE.md).** |
 | [`W3/`](W3/) | The W3 lab (DSPy). The graded copy is the private repo `Shayhha/llm-se-2027-w3-lab-Shayhha`. **Start with [`W3/TAKEAWAYS.md`](W3/TAKEAWAYS.md); practise with [`W3/PRACTICE.md`](W3/PRACTICE.md).** |
@@ -48,7 +48,7 @@ lab work lives here, one folder per week.
 |---|---|
 | `lab-prep/w2-lab-prep.md` | The Moodle submission: `openspec --version` and the flawed-spec critique (22 problems + missing topics) |
 | `spec-lab/lab/worksheet.md` | **All lab answers**: cycle 1 (INVEST, agent test), cycle 2 (OpenSpec), cycle 3 (routing table, glossary, invariants) |
-| `spec-lab/docs/user-stories.md` | Cycle 1: CR-1 written as US-10–US-12, with 5 existing stories updated |
+| `spec-lab/docs/user-stories.md` | Cycle 1: CR-1 written as US-10â€“US-12, with 5 existing stories updated |
 | `spec-lab/openspec/specs/` | Cycle 2: the main specs after archiving `add-issue-triage` |
 | `spec-lab/openspec/changes/add-security-queue/` | Cycle 2: my OpenSpec change for CR-1 (proposal + two spec deltas). It validates. |
 | `spec-lab/openspec/changes/add-priority-score/`, `add-component-owners/` | Cycle 3: the other teams' in-flight changes (from `lab/in-flight/`) |
@@ -61,7 +61,7 @@ lab work lives here, one folder per week.
 | `notebooks/w3_lab.ipynb` | **The lab, solved**: every TODO, all outputs, and the answers to the 9 questions |
 | `outputs/results/w3_results.json` | The score table per part and per issue |
 | `outputs/setup-check-shay-hahiashvili.txt` | The preparation's environment check |
-| `docs/decisions.md` | Decisions the lab did not specify (docstring, example, tool depth and limit, …) |
+| `docs/decisions.md` | Decisions the lab did not specify (docstring, example, tool depth and limit, â€¦) |
 | `improvement-log.md` | Agent and model failures, classified |
 | `src/triage_lab/`, `data/`, `tools/`, `README.md`, `SETUP.md` | The instructor's helper code, issue snapshot, source snapshots and handouts |
 
