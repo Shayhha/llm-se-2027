@@ -52,20 +52,40 @@ For a mixed-language monorepo (TypeScript/JavaScript + Python), structure is cri
 
 ```
 Project-monorepo/
-├── package.json               # Root scripts (Turborepo/Nx)
+├── README.md
+├── package.json               # Root scripts
 ├── pnpm-workspace.yaml        # JS Workspace config
-├── .github/                   # CI/CD workflows (CODEOWNERS lives here)
+├── .github/
+│   ├── workflows/             # CI/CD workflows
+│   └── CODEOWNERS
+├── build/                     # Monorepo build configuration
+│   ├── compose.yaml           # Docker compose configuration for integration
+│   └── mise.toml / justfile   # one entry point for every task
+│
+├── openspec/                  # Specifications
+├── docs/
+│   ├── adr/                   # Decision records
+│   ├── journal.md             # Journal of the team
+│   ├── glossary.md            # Ubiquitous language of the domain
+│   └── verifiability.md       # Indicate how each spec item can be verified
 │
 ├── apps/
 │   ├── web/                   # Next.js Application
 │   │   ├── package.json
 │   │   └── src/...
+│   └── data-exploration/      # UI Application to explore dataset
+│       ├── package.json
+│       └── src/...
 │
 ├── services/
-│   ├── api/                   # Python Microservice (Cloud Run or Docker)
+│   ├── api1/                  # Python Microservice (Cloud Run or Docker)
 │   │   ├── Dockerfile
 │   │   ├── main.py
 │   │   └── requirements.txt
+│   └── api2/                  # Python Microservice (Cloud Run or Docker)
+│       ├── Dockerfile
+│       ├── main.py
+│       └── requirements.txt
 │
 └── packages/                  # Shared JS/TS Libraries
     ├── ui/                    # Shared React UI components
@@ -92,25 +112,14 @@ Instead, we will use the following platform:
 - **Python Modules**
   - **uv workspaces** to manage multiple Python projects from a unified uv environment.
   <https://www.danilchenko.dev/posts/uv-workspaces-monorepo/> provides instructions on how to setup the Python uv workspace.
-  - Use the following repo structure:
-  ```
-  repo/
-  ├── openspec/                 # specs + change proposals (source of truth)
-  ├── apps/web/                 # Next.js
-  ├── services/<svc>/           # Python microservices (FastAPI)
-  ├── packages/py-common/       # shared Python libs (models, auth, logging)
-  ├── packages/ts-api-client/   # generated from OpenAPI — never hand-edited
-  ├── docs/                     # MD docs, ADRs
-  ├── compose.yaml
-  └── mise.toml / justfile      # one entry point for every task
-  ```
+  - Use the repo structure described above.
   - **FastAPI** with **Pydantic v2**, so types become API contracts.
 - **TypeScript Modules (UI)**
   - pnpm workspaces with tsc --noEmit in strict mode as a CI gate, separate from next build.
   - ESLint with typescript-eslint.
   - Zod at runtime boundaries such as forms and environment variables.
 - **Cross-language type contract**
-  - Each FastAPI service exports `openapi.json`. Then `openapi-typescript` generates `packages/ts-api-client`. 
+  - Each FastAPI service exports `openapi.json`. Then `openapi-typescript` generates `packages/ts-types`. 
   - In CI, regenerate the client and fail the build on git diff. That way a Pydantic change that breaks the frontend fails at type-check time, not in production. This also fits OpenSpec well: a spec change leads to a model change, which leads to a regenerated client and a compiler-checked frontend.
 - **Docker deployment**
   - Python: build from the repo root so the image can see shared packages. Use multi-stage builds and the uv dependency-layer method (`uv sync --frozen --no-install-workspace`) with `--mount=type=cache`
@@ -142,10 +151,9 @@ In a large project, we could use the CODEOWNERS configuration in GitHub to autom
 /apps/web/ @my-org/frontend-team
 /packages/ui/ @my-org/frontend-team
 
-# Backend team owns the Python service and Data Connect schemas
-/services/api/ @my-org/backend-team
-/dataconnect.yaml @my-org/backend-team
-/firestore.rules @my-org/backend-team
+# Backend team owns the Python services and Database schemas
+/services/ @my-org/backend-team
+/data.yaml @my-org/backend-team
 
 # Both teams must agree on shared types or contracts
 /packages/ts-types/ @my-org/frontend-team @my-org/backend-team
