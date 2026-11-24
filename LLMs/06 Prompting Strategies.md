@@ -2,8 +2,8 @@
 tags:
   - LLM
   - Prompting
-course: LLM-SE 2026
-semester: Fall 2026
+course: LLM-SE 2027
+semester: Fall 2027
 ---
 Given a fully-trained LLM (instruction fine-tuned and post-trained for human preferences and reasoning patterns and tools usage), prompting strategies are algorithms used at inference-time (that is, these do not include training or weight-updates) to drive the process of generating an answer given a task.  The prompting strategies determine how to encode the task parameters into a prompt (or multiple prompts), which sampling parameters to use for decoding (see [03 LM Decoding Strategies and Parameters](03%20LM%20Decoding%20Strategies%20and%20Parameters.md)), and how to compute the final answer to the task at hand.  
 Prompting strategies are implemented as libraries that invoke an underlying LLM API.
@@ -127,6 +127,16 @@ Feb 2023
 https://arxiv.org/abs/2302.04761
 > Language models (LMs) exhibit remarkable abilities to solve new tasks from just a few examples or textual instructions, especially at scale. They also, paradoxically, struggle with basic functionality, such as arithmetic or factual lookup, where much simpler and smaller models excel. In this paper, we show that LMs can teach themselves to use external tools via simple APIs and achieve the best of both worlds. We introduce Toolformer, a model trained to decide which APIs to call, when to call them, what arguments to pass, and how to best incorporate the results into future token prediction. This is done in a self-supervised way, requiring nothing more than a handful of demonstrations for each API. We incorporate a range of tools, including a calculator, a Q\&A system, two different search engines, a translation system, and a calendar. Toolformer achieves substantially improved zero-shot performance across a variety of downstream tasks, often competitive with much larger models, without sacrificing its core language modeling abilities.
 
+
+## Prompt Optimization
+
+Since the performance of an LLM at performing tasks given a prompt varies strongly depending on the prompt, it is useful to consider the task of designing a successful prompt as a machine learning process.  This approach of "learning how to prompt" is called **prompt optimization**.
+Given a small dataset of input/output pairs, a prompt optimizer will search for prompt variants and select a prompt that maximizes task performance over the training data.
+
+[DSPy](../dspy/) offers a selection of prompt optimization methods.  
+For example, the MiPro2 optimizer will select a set of successful examples to use in a few-shot prompting strategy out of a collection of candidate examples.
+The GEPA optimizer takes advantage of LLMs to reflect on a ReAct style prompt trajectory, 
+evaluate the trajectories and proposing new prompt variants.  Programmers can provide a function to compute domain-specific text feedback for a given computed trajectory and a gold task result, which GEPA can use to improve the prompt.
 
 
 ## Prompting Strategies and Software Engineering
