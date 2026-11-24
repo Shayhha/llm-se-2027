@@ -108,11 +108,14 @@
 | **3 capabilities of the theory** | Relate each part of the code to the world, justify why the design is the way it is, and handle changes by extending the design instead of patching it. |
 | **Two git users** | One knows only the commands; the other knows the model (snapshots, pointers, only adds data). The second can work out behavior they never learned; the first is like Naur's group B, stuck at the first surprise. |
 | **Theory vs spec** | A spec lists *what* the system must do at one moment; the theory knows *why*. Two teams with the same spec but different theories will make incompatible changes. |
-| **Domain model (DDD)** | The team's shared, selective understanding of the domain, not a diagram. It is built by **knowledge crunching**: developers and domain experts work through examples together. |
-| **Ubiquitous language** | One agreed name per concept, used in talk, specs, tests and code. Its 3 jobs: teach newcomers, warn when a change doesn't fit (drift), and tie code names to the theory. |
-| **Bounded context** | The area where one model's terms have one meaning, usually owned by one team. The same word (e.g. "Customer") can mean something else in another context. |
-| **Naur vs DDD** | Naur says the theory can't be written down; DDD says much of it can (model, language, code). |
-| **With AI agents** | Give the agent a glossary of the terms (referenced from `AGENTS.md` / `CLAUDE.md`), and reject generated code that uses synonyms or new concepts. |
+| **DDD (Domain-Driven Design)** | A way to build the team's theory **on purpose** and keep the code matching it. |
+| **Domain model** | What the team agrees the problem is about: its main concepts and rules. Think of it as **the theory, written down**. |
+| **Knowledge crunching** | How the model is built: developers sit with domain experts, go through real examples, and fix the model when something doesn't fit. |
+| **Ubiquitous language** | **One word for one concept, everywhere**: in meetings, specs, tests and code. Example: always "issue", never "ticket" or "case". |
+| **Why one language** | It does 3 things: **teaches** newcomers the terms, **warns** you when a change is hard to describe (it's probably a hack), and **links** code names to real concepts. |
+| **Bounded context** | A part of the system where each word has **exactly one meaning**. "Customer" in billing and "Customer" in shipping can mean different things. |
+| **Naur vs DDD** | Naur: the theory **can't** be written down. DDD: **most of it can**, in the model, the language and the code. |
+| **DDD with AI agents** | Give the agent a **glossary** of your terms, and **reject** code that invents new names for existing concepts. |
 
 ---
 
@@ -154,5 +157,8 @@
 34. What does Naur's group B example show?<details><summary>Answer</summary>Full code and documentation weren't enough: without the theory, B's changes damaged the design.</details>
 35. What 3 things does the theory let a team do?<details><summary>Answer</summary>Relate code to the world, justify the design, and extend the design when things change instead of patching.</details>
 36. Theory vs spec?<details><summary>Answer</summary>A spec says what the system must do; the theory knows why, so it guides the next change.</details>
-37. What are the 3 jobs of the ubiquitous language?<details><summary>Answer</summary>Teach newcomers, warn when a change doesn't fit, and tie code names to the theory.</details>
-38. How do you use the ubiquitous language with AI agents?<details><summary>Answer</summary>Give the agent a glossary of the terms and reject code that uses synonyms or new concepts.</details>
+37. What is a domain model, and how is it built?<details><summary>Answer</summary>The team's agreed concepts and rules of the problem (the theory written down). It's built by knowledge crunching: working through examples with domain experts.</details>
+38. What is the ubiquitous language? Give an example.<details><summary>Answer</summary>One word for one concept, used everywhere, including the code. E.g. always "issue", never "ticket" or "case".</details>
+39. Why does one shared language help (its 3 jobs)?<details><summary>Answer</summary>It teaches newcomers, warns you when a change is hard to describe, and links code names to real concepts.</details>
+40. What is a bounded context?<details><summary>Answer</summary>A part of the system where each word has exactly one meaning; "Customer" can mean different things in billing and shipping.</details>
+41. How do you use DDD with AI agents?<details><summary>Answer</summary>Give the agent a glossary of your terms and reject code that invents new names for existing concepts.</details>
