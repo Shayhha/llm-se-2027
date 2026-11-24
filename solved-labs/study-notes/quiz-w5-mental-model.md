@@ -1,153 +1,158 @@
-# Quiz W5: the lecturer's mental model notes
+# Quiz W5: Git Mental Model
 
-**Based on** `mental_model/Git Mental Model.md` (Part A, the main file) and
-`Mental Models of Software Projects.md` (Part B), in the same order.
+**Based on** the lecturer's `mental_model/Git Mental Model.md` (sections 1–5), plus the key points of
+`Mental Models of Software Projects.md` (section 6).
 
-## Part A: Git Mental Model
+## 1. The mental model of git
 
-### 1. The mental model
-
-| Idea | What it says |
+| Concept | Meaning |
 |---|---|
-| **Stream of snapshots** | each commit = a **picture of all files**; unchanged files aren't stored again, just **linked** to the stored copy |
-| **Local operations** | the **full history is in the local database** (`.git`), so most commands need no network. To share, **push** to a server (GitHub) with **the same functionality** as a local database; pull / clone from it |
-| **Data integrity** | everything is **checksummed (SHA-1, 40 hex chars)** before storing and referred to by it; content is stored **by hash, not by file name**, so no change goes unnoticed |
-| **Git only adds data** | almost every action **only adds**, so a committed snapshot is hard to lose and you can **almost always undo** |
-| **3 states** | **modified** (changed, not committed) · **staged** (marked for the next commit) · **committed** (stored in the database) |
+| **Stream of snapshots** | Every commit stores a picture of all the project's files at that moment. A file that didn't change is not stored again; the commit links to the copy already stored. |
+| **Local operations** | The whole history is stored on your machine in `.git`, so most commands (log, diff, commit) need no network. |
+| **Remote** | Another git repository, usually on a server like GitHub, with the same functionality as yours. You **push** to send commits to it and **fetch / pull / clone** to get commits from it. |
+| **SHA-1 hash** | A 40-character hex code calculated from content, e.g. `24b9da65…`. Git stores everything under the hash of its content, not under a file name. |
+| **Data integrity** | Because every object is named by the hash of its content, changing even one byte gives a different hash. So nothing can change without git noticing. |
+| **Git only adds data** | Almost every git command adds new data and doesn't delete old data. So committed work is very hard to lose and can almost always be restored. |
 
-**3 sections:** **working tree** (one checkout of one version, on disk) · **staging area** (a file in `.git`, technical name **index**) · **git directory** (metadata + object database; **what clone copies**).
-**Workflow:** checkout → modify → **selectively stage** → commit (stores the staged snapshot permanently).
+## 2. The three states and three sections
 
-**Porcelain** = user-level commands (branches, commits, tags, staging, remotes). **Plumbing** = low-level commands on the **primitive objects** and the **3 sections**.
-
-### 2. Porcelain view
-
-- **Create a repo:** `git init` in an existing directory (then `add` + `commit`), or `git clone <url>`.
-- **File lifecycle:** untracked →(add)→ staged; unmodified →(edit)→ modified →(stage)→ staged →(commit)→ unmodified; remove → untracked.
-- **`git status`:** "working tree clean" / "Untracked files" / "Changes to be committed". **Trap:** stage a file, then edit it again → it shows as **both staged and modified**; only the staged version is committed.
-- **`git log`:** commits of the current branch, **newest first**; each has message, author, date, **SHA-1** and its **parent**.
-- **Remotes:** one repo can have **several**; **push** sends, **fetch** gets; `git remote -v` lists them.
-- **Tags:** mark releases; `git tag -a v1.4 -m "…"` (annotated), `git show v1.4`.
-
-### 3. Branching
-
-**A branch is just a pointer to a commit**, so creating and switching are cheap. A **commit** holds a pointer to its snapshot, author, message and **parents: 0** (first), **1** (normal), **2+** (merge).
-
-**The `iss53` + hotfix scenario:**
-
-| Step | Command | Graph |
-|---|---|---|
-| Start | | C0←C1←C2; `main`→C2, **HEAD→main** |
-| New branch | `git checkout -b iss53` (= `branch` + `checkout`) | only a **new pointer** iss53→C2; HEAD→iss53 |
-| Commit | `git commit -a -m …` | C3; **iss53 moves** (HEAD points to it) |
-| Urgent bug | `git checkout main` | working dir = **exactly** main's last commit |
-| Hotfix | `git checkout -b hotfix`, commit | C4 (parent C2) |
-| Deploy | `git checkout main` → `git merge hotfix` | **fast-forward**: main→C4; then `git branch -d hotfix` |
-| Back to work | `git checkout iss53`, commit | C5; **the fix isn't in iss53** (use `git merge main` if needed) |
-| Finish | `git checkout main` → `git merge iss53` | **three-way merge** → C6, parents C4 + C5 |
-
-- **Switching:** git **refuses** if uncommitted changes conflict with the target branch: commit or **stash** first.
-- **Fast-forward:** the merged commit is **directly ahead** (a descendant) → no divergent work → git **just moves the pointer**.
-- **Three-way merge:** histories **diverged** → git uses the **2 tips + their common ancestor** (C2) → a new snapshot and a **merge commit with 2+ parents**.
-- **Conflict:** the **same part of the same file** changed in both. Git **pauses** (no merge commit), `git status` shows **"Unmerged paths / both modified"**. Markers: `<<<<<<< HEAD` (your branch) `=======` (theirs) `>>>>>>> iss53`. Fix manually → **`git add`** (marks resolved) → **commit** (finishes the merge).
-- **Rebase:** replays your commits onto the other branch as **new commits** (linear history). **Don't rebase commits others have**; use a three-way merge.
-
-### 4. Plumbing view
-
-**`.git` key parts:** **objects** (all content) · **refs** (pointers to commits: branches, tags, remotes) · **HEAD** (the checked-out branch) · **index** (staging).
-
-**Objects** are named by a **40-char hash** of their content: **immutable pointers to immutable nodes** in a graph. Types: **blob** (file content), **tree** (folder), **commit** (points to a tree), **tag**.
-
-| Command | What it does |
+| Concept | Meaning |
 |---|---|
-| `git hash-object [-w] [--stdin]` | hash content (+ header); **`-w` stores** it at `.git/objects/<2 chars>/<38 chars>` |
-| `git cat-file -p / -t <hash>` | print an object's content / type |
-| `git update-index --add --cacheinfo <mode> <hash> <name>` | put an entry in the **index** by hand |
-| `git write-tree` | write the **index** as a **tree** object |
-| `git commit-tree <tree> [-p <parent>]` | create a **commit**; message from stdin (`echo msg` piped in); no branch moves |
-| `git update-ref refs/heads/<b> <hash>` | create / move a **branch** safely |
-| `git symbolic-ref HEAD [refs/heads/<b>]` | read / set **HEAD** |
+| **Modified** | You changed the file, but haven't staged or committed the change. |
+| **Staged** | You marked the file's current version to go into the next commit (`git add`). |
+| **Committed** | The version is safely stored in the local database (`.git`). |
+| **Working tree** | The project files on disk that you edit: one version taken out of the database. |
+| **Staging area (index)** | A file inside `.git` that lists exactly what will go into the next commit. Its technical name is the **index**. |
+| **Git directory (`.git`)** | The database of all objects and metadata. It is the most important part, and it is what `clone` copies. |
+| **Basic workflow** | Edit files in the working tree → `git add` the changes you want → `git commit` stores that staged snapshot permanently. |
+| **Porcelain** | The everyday user commands: `add`, `commit`, `checkout`, `branch`, `merge`, `push`, `tag`. |
+| **Plumbing** | Low-level commands that work directly on git's objects and the index, e.g. `hash-object`, `write-tree`, `commit-tree`. |
 
-- **Blob versions:** storing "version 1" then "version 2" gives **2 blobs**; either can be restored with `cat-file -p <hash> > file`. But blobs have **no file name** → trees.
-- **Trees** = like a simplified UNIX file system; each entry = **mode, type, hash, name**. `main^{tree}` = main's last commit's tree. Modes: **100644** file, **100755** executable, **120000** symlink (`040000` = sub-tree).
-- **Commits** add **who, when, why**: `tree`, `parent`, author/committer (`user.name`, `user.email`, timestamp), message. Chaining `commit-tree -p` builds a real history **without porcelain**.
-- **`git add` + `git commit`** = store blobs, update the index, write trees, write a commit pointing to the top tree + the previous commit.
-- **Refs:** a file in `.git/refs/heads` holding a hash. **A branch = a pointer to the head of a line of work**.
-- **HEAD** is a **symbolic reference**: it points to **another ref**, not a hash (`ref: refs/heads/main`). `git checkout test` changes it to `ref: refs/heads/test`. `git commit` uses **the commit HEAD's branch points to** as the parent.
-- **Tag object** (4th type): tagger, date, message, pointer to a **commit**; a name that **never moves**.
+## 3. Everyday commands (porcelain)
 
-## Part B: Mental Models of Software Projects
-
-### 5. Naur: programming as theory building (1985)
-
-- Programming mainly produces a **theory** the team holds about how the program handles part of the world. "Theory" (Ryle) = knowledge to **do** something and **explain, justify and answer questions** about it.
-- **Case 1:** group B extended group A's **compiler** with **full source, design docs and access to A**, yet its patches "destroyed the power and simplicity" of the design; A saw it instantly.
-- **Case 2:** the team of a **200,000-line real-time system** found faults from **knowledge + code**; other teams with full documentation struggled.
-- **Conclusion:** the theory **can't be expressed**; it lives in people. A program is **alive** while a team holding its theory controls it and **dies** when the team dissolves; reviving it from documentation is "strictly impossible".
-- **3 capabilities of the theory:** (1) **relate the program to the world** and decide what's relevant; (2) **justify the design**; (3) **respond to change** by **extending, not patching**. All need **noticing similarities**, which can't be written as rules.
-- **Lecturer's note:** "system 1"-like AI makes "can't be expressed" **less convincing**, but owning a project still = **explain, justify, adapt**.
-
-### 6. The git example; theory vs specs
-
-- **User 1 knows commands** (add, commit, checkout -b, merge). **User 2 holds the model** (snapshots, content hashes, only adds, 3 states, branch = pointer) and **derives** behavior: cheap branches (one pointer), fast-forward (target is a descendant), recoverable "lost" commits (nothing erased), conflicts (same region vs a common ancestor). **User 1 = group B**: has the docs, stuck at the first surprise.
-- Code, specs and design **come out of** the shared understanding; writing them is **how** a team builds the model.
-- **Spec** = a finite, explicit list of **what** the system must do: one **output / snapshot** of the theory. **Theory** = **why** these requirements, what's irrelevant, central vs incidental, where the design can stretch. **Same spec + different theories → incompatible answers to the next change.**
-
-### 7. Theory, DDD and ubiquitous language
-
-- **DDD (Evans, 2003)** = practices to build the theory **on purpose**, share it and keep code aligned.
-- **Domain model** = a **selective abstraction** of the team's knowledge: the **shared understanding**, not a diagram. Built by **knowledge crunching** (developers + domain experts iterate on examples, find gaps, rebuild).
-
-| Naur's capability | DDD practice |
+| Concept | Meaning |
 |---|---|
-| relate to the world / relevance | **model-driven design**: code structure mirrors the model |
-| justify the design | argue in **domain terms** ("a Leg belongs to an Itinerary because…") |
-| respond to change | **refactoring toward deeper insight**: revise the model, no special cases |
+| **`git init`** | Turns the current folder into a new, empty repository by creating `.git`. |
+| **`git clone <url>`** | Copies an existing remote repository, with its full history, to your machine. |
+| **Untracked file** | A new file git doesn't track yet; `git add` makes it tracked and staged. |
+| **Unmodified file** | A tracked file that is the same as in the last commit. Editing it makes it modified. |
+| **`git status`** | Shows which files are untracked, modified and staged. |
+| **Edit after `add`** | If you stage a file and then edit it again, the new edit is **not** staged. Status shows the file as both staged and modified, and commit takes only the staged version. |
+| **`git log`** | Lists the commits of the current branch, newest first, each with its hash, author, date and message. |
+| **Parent commit** | The commit a new commit was built on. A commit has 0 parents if it's the first, 1 normally, and 2 or more if it's a merge. |
+| **`git remote -v`** | Lists the remotes linked to the repository (e.g. `origin`). One repository can have several remotes. |
+| **Tag** | A fixed name for one commit, usually a release such as `v1.4`. Unlike a branch, it never moves. `git tag -a v1.4 -m "msg"` creates an annotated tag. |
 
-- **Ubiquitous language = the shared, visible part of the theory**: one vocabulary in talk, specs, tests and code. Not a theory itself, but it does **3 jobs**: **transmission** (newcomers corrected on terms), **detecting drift** (a change that can't be phrased naturally = a patch coming), **binding code to theory** (identifiers = domain terms). Git's UL: blob, tree, commit, ref, HEAD, index, working tree.
-- **Bounded context** = where a model's language holds ("Customer" in billing ≠ shipping), usually one team: **the scope of one team's theory**. A **context map** relates teams' theories.
-- **Naur vs DDD:** expressible? Naur **no**, DDD **mostly yes** (the AI note leans to DDD). Method? Naur: **no right method**; DDD: **patterns, not a procedure** (Naur accepts aids).
+## 4. Branching and merging
 
-### 8. With AI agents
+| Concept | Meaning |
+|---|---|
+| **Branch** | A movable pointer to a commit; it lets you work in isolation without touching `main`. Creating one only creates a pointer, so it is instant. |
+| **HEAD** | Points to the branch you are on now. When you commit, the branch that HEAD points to moves forward to the new commit. |
+| **`git checkout -b iss53`** | Creates branch `iss53` and switches to it. It is shorthand for `git branch iss53` + `git checkout iss53`. |
+| **`git checkout main`** | Switches to `main`: HEAD points to it and the files on disk change to match main's last commit. |
+| **Switching is refused** | Git won't switch branches if your uncommitted changes conflict with the target branch. Commit or stash them first. |
+| **Fast-forward merge** | When the branch you merge in is directly ahead of yours, git only moves your branch pointer forward. No new commit is created. |
+| **Three-way merge** | When the two branches have diverged, git combines their two latest commits and their common ancestor. The result is a new **merge commit** with two parents. |
+| **Common ancestor** | The last commit that both branches share, i.e. where they split. |
+| **Merge conflict** | Both branches changed the same part of the same file. Git stops the merge and lists the file under "Unmerged paths" in `git status`. |
+| **Conflict markers** | Between `<<<<<<< HEAD` and `=======` is your current branch's version; between `=======` and `>>>>>>> iss53` is the other branch's version. |
+| **Resolving a conflict** | Edit the file to the correct content, run `git add` to mark it resolved, then `git commit` to finish the merge. |
+| **`git branch -d <b>`** | Deletes a branch pointer after it was merged. The commits stay. |
+| **Rebase** | Copies your commits onto the end of another branch as new commits, giving a straight-line history. Never rebase commits that others already have. |
 
-The UL is the **cheapest part of the theory to give an LLM**: a **glossary** in its instructions, specs that **use the terms** (OpenSpec `issue-enrichment`, `issue-routing`), and **rejecting code with synonyms or new concepts**. The team still decides **relevance** and **when the model changes**, and keeps the code consistent with the theory.
+**The lecture's scenario (`iss53` + hotfix):**
 
-**In practice: the project glossary** (`project/Project Glossary.md`, kept at `docs/glossary.md`). It fixes **one name and one meaning per concept**, used in the PRD, specs, code, tests and UI. An agent not told what "issue", "ticket" and "case" mean will treat them as 3 concepts (or merge distinct ones), so **reference the glossary from `AGENTS.md` / `CLAUDE.md`**. Rules:
-- one entry per concept: a **preferred term**, synonyms under **Avoid**;
-- the definition says what it is **in this project**, plus what it is **not** ("Not to be confused with");
-- give the **code name** (class, table, field, endpoint);
-- alphabetical; **update it in the same PR** that changes a term; record disputed terms with a link to the ADR or issue.
+| Step | What happens |
+|---|---|
+| `git checkout -b iss53`, commit C3 | A new pointer `iss53` is created; it moves to C3, and `main` stays at C2. |
+| Urgent bug: `git checkout main` | The files return to exactly main's version, without your iss53 work. |
+| `git checkout -b hotfix`, commit C4 | The fix is made on its own branch, which starts at main (C2). |
+| `git checkout main`, `git merge hotfix` | **Fast-forward**: main moves to C4. Then `git branch -d hotfix`. |
+| `git checkout iss53`, commit C5 | iss53 does **not** contain the fix (C4); `git merge main` would bring it in. |
+| `git checkout main`, `git merge iss53` | **Three-way merge** of C4 and C5 with their common ancestor C2 → merge commit C6. |
 
-Examples: **Issue** (avoid: ticket, case, request; `Issue`); **Component** ≠ *Label* (a closed list, one owning team); **Escalation** ≠ *Priority* (who handles triage, not urgency); **Confidence** = a [0, 1] score per extracted field, not the probability of correct routing.
+## 5. Inside `.git` (plumbing)
+
+| Concept | Meaning |
+|---|---|
+| **`objects/`** | Stores all the content: every version of every file, plus all trees and commits. |
+| **`refs/`** | Stores the pointers to commits: branches (`refs/heads`), tags (`refs/tags`) and remote branches. |
+| **`HEAD` file** | Says which branch is checked out, e.g. `ref: refs/heads/main`. |
+| **`index` file** | The staging area. |
+| **Blob** | An object that stores the content of one file, without its name. Two versions of a file are two different blobs. |
+| **Tree** | An object that stores a folder: each entry has a mode, a type (blob or tree), a hash and a file name. |
+| **Commit object** | An object that stores a top-level tree's hash, the parent commit(s), the author and committer, and the message. |
+| **Tag object** | A 4th object type: like a commit (tagger, date, message), but it points to a commit, not a tree. |
+| **Object storage path** | An object is saved as `.git/objects/` + the first 2 hash characters (folder) + the other 38 (file name). |
+| **File modes** | `100644` normal file, `100755` executable, `120000` symbolic link; `040000` marks a sub-tree. |
+| **`git hash-object -w <file>`** | Computes the file's hash and, with `-w`, stores it as a blob. `--stdin` reads the content from standard input instead of a file. |
+| **`git cat-file -p / -t <hash>`** | `-p` prints an object's content; `-t` prints its type (blob, tree, commit). |
+| **`git update-index --add --cacheinfo`** | Adds an entry (mode, blob hash, file name) to the index by hand. |
+| **`git write-tree`** | Writes the current index as a tree object and prints its hash. |
+| **`git commit-tree <tree> -p <parent>`** | Creates a commit object for a tree, with an optional parent; the message comes from stdin. It does not move any branch. |
+| **What `add` + `commit` do** | Store blobs for changed files and update the index, write trees from the index, then write a commit pointing to the top tree and the previous commit. |
+| **Reference (ref)** | A file in `.git/refs` holding a commit's hash, so you can use a name instead of the hash. **A branch is exactly such a ref.** |
+| **`git update-ref refs/heads/<b> <hash>`** | The safe way to create or move a branch to a commit. |
+| **Symbolic reference** | A ref that points to another ref instead of a hash. HEAD is one: it contains `ref: refs/heads/main`. |
+| **`git symbolic-ref HEAD`** | Reads which branch HEAD points to; with a ref argument, it sets it. |
+| **How commit uses HEAD** | `git commit` makes the new commit's parent the commit that HEAD's branch points to, then moves that branch to the new commit. |
+
+## 6. Mental models of software projects (Naur + DDD)
+
+| Concept | Meaning |
+|---|---|
+| **Theory (Naur)** | The understanding a team builds of how the program handles part of the real world. It lets them explain the code, justify it and answer questions about it. |
+| **Naur's evidence** | Group B had the full code, documents and access to group A, yet still damaged A's compiler design. The original team of a 200,000-line system found bugs that documented outsiders couldn't. |
+| **Program life and death** | A program is "alive" while the team that holds its theory works on it. It "dies" when that team breaks up, and documentation alone can't revive it. |
+| **3 capabilities of the theory** | Relate each part of the code to the world, justify why the design is the way it is, and handle changes by extending the design instead of patching it. |
+| **Two git users** | One knows only the commands; the other knows the model (snapshots, pointers, only adds data). The second can work out behavior they never learned; the first is like Naur's group B, stuck at the first surprise. |
+| **Theory vs spec** | A spec lists *what* the system must do at one moment; the theory knows *why*. Two teams with the same spec but different theories will make incompatible changes. |
+| **Domain model (DDD)** | The team's shared, selective understanding of the domain, not a diagram. It is built by **knowledge crunching**: developers and domain experts work through examples together. |
+| **Ubiquitous language** | One agreed name per concept, used in talk, specs, tests and code. Its 3 jobs: teach newcomers, warn when a change doesn't fit (drift), and tie code names to the theory. |
+| **Bounded context** | The area where one model's terms have one meaning, usually owned by one team. The same word (e.g. "Customer") can mean something else in another context. |
+| **Naur vs DDD** | Naur says the theory can't be written down; DDD says much of it can (model, language, code). |
+| **With AI agents** | Give the agent a glossary of the terms (referenced from `AGENTS.md` / `CLAUDE.md`), and reject generated code that uses synonyms or new concepts. |
 
 ---
 
 ## Practice Q&A
 
-1. What are the 5 ideas of git's mental model?<details><summary>Answer</summary>Stream of snapshots; local operations; data integrity (SHA-1, stored by content hash); git only adds data; 3 states (modified, staged, committed).</details>
-2. Why do most git commands work offline? What is a remote?<details><summary>Answer</summary>The full history is in the local .git database. A remote is a shared server with the same functionality, which you push to and pull/clone from.</details>
-3. Name the 3 states and the 3 sections. What does clone copy?<details><summary>Answer</summary>Modified, staged, committed; working tree, staging area (index), git directory. Clone copies the git directory.</details>
-4. Plumbing vs porcelain?<details><summary>Answer</summary>Porcelain: user-level commands. Plumbing: low-level commands on the primitive objects and the 3 sections.</details>
-5. You stage a file and then edit it again. What does status show and what is committed?<details><summary>Answer</summary>Both staged and modified; only the staged version is committed.</details>
-6. Why is branching cheap? How many parents can a commit have?<details><summary>Answer</summary>A branch is just a pointer to a commit. 0 (initial), 1 (normal), 2+ (merge).</details>
-7. What does `git checkout -b iss53` change in the graph? Which pointer moves on commit?<details><summary>Answer</summary>A new pointer iss53 at the current commit, and HEAD → iss53. On commit, iss53 moves because HEAD points to it.</details>
-8. When does git refuse to switch branches?<details><summary>Answer</summary>When uncommitted changes conflict with the target branch; commit or stash first.</details>
-9. Fast-forward vs three-way merge?<details><summary>Answer</summary>Fast-forward: the merged commit is a descendant, so the pointer just moves. Three-way: histories diverged; git uses both tips + the common ancestor to make a merge commit with 2+ parents.</details>
-10. After the hotfix is merged into main, why doesn't iss53 have it?<details><summary>Answer</summary>iss53 branched before the fix; `git merge main` into iss53 brings it, or wait for iss53's merge into main.</details>
-11. What is a merge conflict, and how is it resolved?<details><summary>Answer</summary>The same part of the same file changed in both branches. Git pauses, shows unmerged paths; fix manually, `git add` to mark resolved, commit to finish.</details>
-12. When shouldn't you rebase?<details><summary>Answer</summary>When the commits are shared/pushed: rebase creates new commits. Use a three-way merge instead.</details>
-13. What are the 4 key parts of `.git`?<details><summary>Answer</summary>objects, refs (branches, tags, remotes), HEAD (current branch), index (staging).</details>
-14. What do `hash-object -w` and `cat-file -p / -t` do? Where is object `83baae61…` stored?<details><summary>Answer</summary>Hash and store content; print content / type. `.git/objects/83/baae61…` (2 + 38 chars).</details>
-15. Why are trees needed, and what is in a tree entry?<details><summary>Answer</summary>Blobs have no file names. Entry: mode (100644 file, 100755 executable, 120000 symlink), type, hash, name.</details>
-16. How do you build a tree and a commit with plumbing?<details><summary>Answer</summary>`update-index --add --cacheinfo` fills the index; `write-tree` writes it as a tree; `echo msg | commit-tree <tree> -p <parent>` makes the commit.</details>
-17. What do `git add` + `git commit` do in plumbing terms?<details><summary>Answer</summary>Store blobs, update the index, write trees, write a commit pointing to the top tree and the previous commit.</details>
-18. What is a branch at the plumbing level, and how is it created safely?<details><summary>Answer</summary>A file in .git/refs/heads with a commit hash; `git update-ref refs/heads/<name> <hash>`.</details>
-19. What is a symbolic reference? How does commit use HEAD?<details><summary>Answer</summary>A ref pointing to another ref: HEAD = `ref: refs/heads/main`. The new commit's parent is the commit HEAD's branch points to. Use `git symbolic-ref`.</details>
-20. Tag object vs commit vs branch?<details><summary>Answer</summary>Like a commit (tagger, date, message) but points to a commit, not a tree; like a branch but never moves.</details>
-21. What is Naur's "theory", and what are his two cases?<details><summary>Answer</summary>Knowledge to do, explain, justify and answer questions. Group B broke A's compiler despite full docs; a 200k-line system's own team found faults outsiders couldn't.</details>
-22. What are the theory's 3 capabilities, and when does a program "die"?<details><summary>Answer</summary>Relate to the world, justify the design, extend not patch. It dies when the team holding its theory dissolves.</details>
-23. How do the two git users illustrate Naur?<details><summary>Answer</summary>The command user is group B (docs, stuck at surprises); the model holder derives behavior (cheap branches, fast-forward, recovery, conflicts).</details>
-24. Theory vs spec?<details><summary>Answer</summary>A spec is an explicit snapshot of what; the theory is why, what's relevant, where it can stretch. Same spec + different theories → incompatible changes.</details>
-25. Map Naur's capabilities to DDD, and name the UL's 3 jobs.<details><summary>Answer</summary>Model-driven design; arguing in domain terms; refactoring toward deeper insight. Transmission, detecting drift, binding code to theory.</details>
-26. Bounded context in theory terms? Naur vs DDD? Use with AI agents?<details><summary>Answer</summary>The scope of one team's theory (context map relates them). Naur: inexpressible, no method; DDD: mostly explicit, patterns. Give agents the glossary, specs in its terms, reject synonyms; the team owns relevance and model changes.</details>
-27. What goes in a project glossary entry, and how is it used with agents?<details><summary>Answer</summary>Preferred term, project-specific definition, "not to be confused with", Avoid (synonyms), code name, example, related terms, source/ADR. Keep it in docs/glossary.md, update it in the same PR as the term changes, and reference it from AGENTS.md / CLAUDE.md so the agent reads it first.</details>
+1. What does "stream of snapshots" mean?<details><summary>Answer</summary>Each commit stores a picture of all files; unchanged files are linked to the stored copy, not stored again.</details>
+2. Why do most git commands work without a network?<details><summary>Answer</summary>The full history is stored locally in `.git`.</details>
+3. How does git make sure data isn't changed silently?<details><summary>Answer</summary>Everything is stored under the SHA-1 hash of its content, so any change gives a different hash.</details>
+4. Why is it hard to lose committed work in git?<details><summary>Answer</summary>Almost every command only adds data and doesn't delete old data, so old versions can be restored.</details>
+5. Name the 3 states of a file.<details><summary>Answer</summary>Modified, staged, committed.</details>
+6. Name the 3 sections of a git project. Which one does clone copy?<details><summary>Answer</summary>Working tree, staging area (index), git directory. Clone copies the git directory.</details>
+7. What is the staging area technically?<details><summary>Answer</summary>A file inside `.git` called the index, listing what goes into the next commit.</details>
+8. Porcelain vs plumbing?<details><summary>Answer</summary>Porcelain = everyday user commands; plumbing = low-level commands on objects and the index.</details>
+9. `git init` vs `git clone`?<details><summary>Answer</summary>init creates a new empty repository here; clone copies an existing remote repository with its history.</details>
+10. You stage a file, then edit it again, then commit. What is committed?<details><summary>Answer</summary>Only the staged version; the second edit stays modified.</details>
+11. How many parents can a commit have?<details><summary>Answer</summary>0 for the first commit, 1 normally, 2 or more for a merge commit.</details>
+12. What is a branch, and why is creating one cheap?<details><summary>Answer</summary>A movable pointer to a commit; creating one just writes a pointer.</details>
+13. What is HEAD?<details><summary>Answer</summary>A pointer to the current branch; on commit, that branch moves to the new commit.</details>
+14. What does `git checkout -b iss53` do?<details><summary>Answer</summary>Creates branch iss53 at the current commit and switches to it (= `git branch` + `git checkout`).</details>
+15. When does git refuse to switch branches?<details><summary>Answer</summary>When uncommitted changes conflict with the target branch; commit or stash first.</details>
+16. When is a merge a fast-forward?<details><summary>Answer</summary>When the merged branch is directly ahead of yours, so git only moves your pointer forward.</details>
+17. What is a three-way merge?<details><summary>Answer</summary>Merging diverged branches using both latest commits and their common ancestor, creating a merge commit with two parents.</details>
+18. In the scenario, why doesn't iss53 contain the hotfix?<details><summary>Answer</summary>iss53 split off before the fix was made; `git merge main` into iss53 brings it in.</details>
+19. What is a merge conflict?<details><summary>Answer</summary>Both branches changed the same part of the same file, so git stops and asks you to fix it.</details>
+20. How do you resolve a conflict?<details><summary>Answer</summary>Edit the file, `git add` it to mark it resolved, then `git commit` to finish the merge.</details>
+21. When should you not rebase?<details><summary>Answer</summary>When the commits are already shared with others, because rebase replaces them with new commits.</details>
+22. What are the 4 key parts of `.git`?<details><summary>Answer</summary>objects (content), refs (branches, tags, remotes), HEAD (current branch), index (staging area).</details>
+23. Blob vs tree vs commit?<details><summary>Answer</summary>Blob = one file's content; tree = a folder (names → blobs/trees); commit = a top tree + parents + author + message.</details>
+24. Where is the object with hash `83baae61…` stored?<details><summary>Answer</summary>In `.git/objects/83/baae61…`: the first 2 characters are the folder.</details>
+25. What do `hash-object -w` and `cat-file -p` do?<details><summary>Answer</summary>hash-object computes a hash and stores the content as a blob; cat-file -p prints an object by its hash.</details>
+26. Why are tree objects needed?<details><summary>Answer</summary>Blobs store only content, so trees record the file names and folder structure.</details>
+27. What do modes 100644, 100755 and 120000 mean?<details><summary>Answer</summary>Normal file, executable file, symbolic link.</details>
+28. How do you build a commit with plumbing only?<details><summary>Answer</summary>`update-index` fills the index, `write-tree` turns it into a tree, `commit-tree` makes a commit from that tree.</details>
+29. What do `git add` + `git commit` do internally?<details><summary>Answer</summary>Store blobs and update the index, write trees, and write a commit pointing to the top tree and the previous commit.</details>
+30. What is a branch at the plumbing level?<details><summary>Answer</summary>A file in `.git/refs/heads` that holds a commit's hash; `git update-ref` sets it safely.</details>
+31. What is a symbolic reference?<details><summary>Answer</summary>A ref that points to another ref: HEAD contains `ref: refs/heads/main`.</details>
+32. How is a tag different from a branch?<details><summary>Answer</summary>A tag always points to the same commit; a branch moves forward with new commits.</details>
+33. What is Naur's "theory"?<details><summary>Answer</summary>The team's understanding of how the program maps to the world, which lets them explain and justify it.</details>
+34. What does Naur's group B example show?<details><summary>Answer</summary>Full code and documentation weren't enough: without the theory, B's changes damaged the design.</details>
+35. What 3 things does the theory let a team do?<details><summary>Answer</summary>Relate code to the world, justify the design, and extend the design when things change instead of patching.</details>
+36. Theory vs spec?<details><summary>Answer</summary>A spec says what the system must do; the theory knows why, so it guides the next change.</details>
+37. What are the 3 jobs of the ubiquitous language?<details><summary>Answer</summary>Teach newcomers, warn when a change doesn't fit, and tie code names to the theory.</details>
+38. How do you use the ubiquitous language with AI agents?<details><summary>Answer</summary>Give the agent a glossary of the terms and reject code that uses synonyms or new concepts.</details>
