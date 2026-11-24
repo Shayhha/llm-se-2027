@@ -55,35 +55,37 @@ Project-monorepo/
 ├── README.md
 ├── package.json               # Root scripts
 ├── pnpm-workspace.yaml        # JS Workspace config
-├── .github/work               # CI/CD workflows (CODEOWNERS lives here)
-├── build                      # Monorepo build configuration
-|   ├-- compose.yaml           # Docker compose configuration for integration
-|   └── mise.toml / justfile   # one entry point for every task
+├── .github/
+│   ├── workflows/             # CI/CD workflows
+│   └── CODEOWNERS
+├── build/                     # Monorepo build configuration
+│   ├── compose.yaml           # Docker compose configuration for integration
+│   └── mise.toml / justfile   # one entry point for every task
 │
 ├── openspec/                  # Specifications
 ├── docs/
-|   ├── adr/                   # Decision records
-|   ├── journal.md             # Journal of the team
-|   ├── glossary.md            # Ubiquitous language of the domain
-|   ├── verifiability.md       # Indicate how each spec item can be verified
-|
+│   ├── adr/                   # Decision records
+│   ├── journal.md             # Journal of the team
+│   ├── glossary.md            # Ubiquitous language of the domain
+│   └── verifiability.md       # Indicate how each spec item can be verified
+│
 ├── apps/
 │   ├── web/                   # Next.js Application
 │   │   ├── package.json
 │   │   └── src/...
-│   ├── data-exploration/      # UI Application to explore dataset
-│   │   ├── package.json
-│   │   └── src/...
-│ 
+│   └── data-exploration/      # UI Application to explore dataset
+│       ├── package.json
+│       └── src/...
+│
 ├── services/
 │   ├── api1/                  # Python Microservice (Cloud Run or Docker)
 │   │   ├── Dockerfile
 │   │   ├── main.py
 │   │   └── requirements.txt
-│   ├── api2/                  # Python Microservice (Cloud Run or Docker)
-│   │   ├── Dockerfile
-│   │   ├── main.py
-│   │   └── requirements.txt
+│   └── api2/                  # Python Microservice (Cloud Run or Docker)
+│       ├── Dockerfile
+│       ├── main.py
+│       └── requirements.txt
 │
 └── packages/                  # Shared JS/TS Libraries
     ├── ui/                    # Shared React UI components
@@ -160,8 +162,8 @@ In a large project, we could use the CODEOWNERS configuration in GitHub to autom
 /apps/web/ @my-org/frontend-team
 /packages/ui/ @my-org/frontend-team
 
-# Backend team owns the Python service and Database schemas
-/services/api/ @my-org/backend-team
+# Backend team owns the Python services and Database schemas
+/services/ @my-org/backend-team
 /data.yaml @my-org/backend-team
 
 # Both teams must agree on shared types or contracts
