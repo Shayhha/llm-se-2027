@@ -112,6 +112,14 @@
 
 The UL is the **cheapest part of the theory to give an LLM**: a **glossary** in its instructions, specs that **use the terms** (OpenSpec `issue-enrichment`, `issue-routing`), and **rejecting code with synonyms or new concepts**. The team still decides **relevance** and **when the model changes**, and keeps the code consistent with the theory.
 
+**In practice: the project glossary** (`project/Project Glossary.md`, kept at `docs/glossary.md`). It fixes **one name and one meaning per concept**, used in the PRD, specs, code, tests and UI. An agent not told what "issue", "ticket" and "case" mean will treat them as 3 concepts (or merge distinct ones), so **reference the glossary from `AGENTS.md` / `CLAUDE.md`**. Rules:
+- one entry per concept: a **preferred term**, synonyms under **Avoid**;
+- the definition says what it is **in this project**, plus what it is **not** ("Not to be confused with");
+- give the **code name** (class, table, field, endpoint);
+- alphabetical; **update it in the same PR** that changes a term; record disputed terms with a link to the ADR or issue.
+
+Examples: **Issue** (avoid: ticket, case, request; `Issue`); **Component** ≠ *Label* (a closed list, one owning team); **Escalation** ≠ *Priority* (who handles triage, not urgency); **Confidence** = a [0, 1] score per extracted field, not the probability of correct routing.
+
 ---
 
 ## Practice Q&A
@@ -142,3 +150,4 @@ The UL is the **cheapest part of the theory to give an LLM**: a **glossary** in 
 24. Theory vs spec?<details><summary>Answer</summary>A spec is an explicit snapshot of what; the theory is why, what's relevant, where it can stretch. Same spec + different theories → incompatible changes.</details>
 25. Map Naur's capabilities to DDD, and name the UL's 3 jobs.<details><summary>Answer</summary>Model-driven design; arguing in domain terms; refactoring toward deeper insight. Transmission, detecting drift, binding code to theory.</details>
 26. Bounded context in theory terms? Naur vs DDD? Use with AI agents?<details><summary>Answer</summary>The scope of one team's theory (context map relates them). Naur: inexpressible, no method; DDD: mostly explicit, patterns. Give agents the glossary, specs in its terms, reject synonyms; the team owns relevance and model changes.</details>
+27. What goes in a project glossary entry, and how is it used with agents?<details><summary>Answer</summary>Preferred term, project-specific definition, "not to be confused with", Avoid (synonyms), code name, example, related terms, source/ADR. Keep it in docs/glossary.md, update it in the same PR as the term changes, and reference it from AGENTS.md / CLAUDE.md so the agent reads it first.</details>
