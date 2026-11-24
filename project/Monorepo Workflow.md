@@ -119,7 +119,7 @@ Instead, we will use the following platform:
   - ESLint with typescript-eslint.
   - Zod at runtime boundaries such as forms and environment variables.
 - **Cross-language type contract**
-  - Each FastAPI service exports `openapi.json`. Then `openapi-typescript` generates `packages/ts-api-client`. 
+  - Each FastAPI service exports `openapi.json`. Then `openapi-typescript` generates `packages/ts-types`. 
   - In CI, regenerate the client and fail the build on git diff. That way a Pydantic change that breaks the frontend fails at type-check time, not in production. This also fits OpenSpec well: a spec change leads to a model change, which leads to a regenerated client and a compiler-checked frontend.
 - **Docker deployment**
   - Python: build from the repo root so the image can see shared packages. Use multi-stage builds and the uv dependency-layer method (`uv sync --frozen --no-install-workspace`) with `--mount=type=cache`
