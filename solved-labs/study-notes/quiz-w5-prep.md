@@ -1,5 +1,7 @@
 # Quiz W5 prep: git concepts + domain-driven design
 
+**Sources:** the lecturer's `mental_model/Git Mental Model.md` and `Mental Models of Software Projects.md` + the syllabus.
+
 **Scope (syllabus, W4):** DDD principles and the **git case study**: git's basic concepts, the
 commands derived from them, and git as a ubiquitous-language counterexample. Plus **Tuesday's lab**
 (a mini git + disaster recovery, see section 8). Commands are given in the classic form
@@ -11,19 +13,29 @@ commands derived from them, and git as a ubiquitous-language counterexample. Plu
 
 Git is a **content-addressed object store** plus a few **pointers** into it.
 
+**The lecturer's mental model of git (5 ideas):**
+1. **Stream of snapshots:** each commit is a picture of all files; unchanged files are just a link to the already-stored copy.
+2. **Local operations:** the full history is in the local database (`.git`), so most commands need no network. A remote (GitHub) is the same kind of database, shared by the team.
+3. **Integrity by design:** everything is **checksummed (SHA-1, 40 hex chars)** before it is stored and referred to by that checksum; content is stored by hash, **not by file name**. Nothing changes without git knowing.
+4. **Git only adds data:** almost every action adds to the database, so almost everything can be undone.
+5. **Three states:** files are **modified**, **staged** or **committed**.
+
 | Concept | Meaning |
 |---|---|
 | **Content-addressed** | every object is stored under the **hash (SHA-1) of its content**. Same content → same hash; change one byte → a new hash. The hash is both the **name** and an **integrity check** |
 | **Blob** | the **content of one file** (no name, no date) |
 | **Tree** | a **directory listing**: names → blob hashes (files) and tree hashes (sub-folders) |
-| **Commit** | points to **one root tree** (the full snapshot) + **parent commit(s)** + author, date, message |
+| **Commit** | points to **one root tree** (the full snapshot) + **parent commit(s)** (0 for the first commit, 1 normally, 2+ for a merge) + author, committer, date, message |
 | **DAG of commits** | commits point back to their parents, forming a **directed acyclic graph**. Objects are **immutable**: "changing" history creates new commits |
 | **Ref** | a **mutable pointer** (a name → a commit hash, a small file in `.git/refs/`) into the immutable DAG. A **branch** is a ref that **moves forward** when you commit (so creating one is instant); a **tag** never moves (`v1.2.0`) |
 | **HEAD** | **where you are**: usually points to a branch (`ref: refs/heads/main`) |
 | **Detached HEAD** | HEAD points **directly at a commit**, not a branch; new commits there are reachable from no branch |
 | **Remote** | **another repository** (e.g. `origin` on GitHub). `origin/main` = your last-known copy of its branch; `fetch` / `push` copy objects and update refs |
 
-**The three trees:** **HEAD** (the last commit) · the **index** / staging area (the next commit) · the **working directory** (files on disk). `add` = working dir → index; `commit` = index → new commit + branch moves; `checkout` = commit → index + working dir.
+**The three trees / sections:** **HEAD** (the last commit) · the **index** / staging area (the next commit) · the **working directory** (files on disk). `add` = working dir → index; `commit` = index → new commit + branch moves; `checkout` = commit → index + working dir.
+- **Working tree:** one checkout of one version, unpacked from the database. **Staging area:** a file in `.git` (technical name: the **index**). **Git directory:** the metadata + object database, the most important part, and **what is copied when you clone**.
+- **File lifecycle:** **untracked** →(add)→ **staged**; **unmodified** →(edit)→ **modified** →(add)→ **staged** →(commit)→ **unmodified**; remove → untracked.
+- Modify a file, `add` it, then modify it again: the **second change is not staged**; the file shows as both staged and modified.
 
 **The `.git` folder** is the repository: `objects/` (blobs, trees, commits), `refs/` (branches,
 tags, remote branches), `HEAD`, `index`, `config`, `logs/` (the reflog), `hooks/`. Delete it and
@@ -42,7 +54,7 @@ just operations on objects and refs.
 | **`git reset <commit>`** | **moves the current branch ref** to `<commit>`. `--soft`: only the ref; `--mixed` (default): ref + index; `--hard`: ref + index + working dir |
 | **`git cherry-pick <c>`** | takes the **change** `<c>` introduced (its diff against its parent) and makes a **new commit** with it on the current branch (new hash) |
 | **`git rebase <base>`** | cherry-picks your commits one by one onto `<base>`, then **moves your branch ref** to the last new commit. The old commits still exist, unreferenced |
-| **`git merge <b>`** | creates a commit with **two parents** (or, if your branch is behind, just **moves the ref**: a fast-forward) |
+| **`git merge <b>`** | **fast-forward:** if the target commit is a **descendant** of yours (no divergent work), git just **moves the pointer**. **Three-way merge:** if histories diverged, git combines the two tips and their **common ancestor** into a new snapshot and a **merge commit** (2 parents) |
 | **`git reflog`** | a **log of every value HEAD (and each branch) has pointed to**, local only. Since commits aren't deleted, it recovers anything a reset or rebase "lost" |
 | **`git revert <c>`** | a **new commit** with the inverse change; nothing is rewritten |
 
@@ -85,8 +97,8 @@ Git **refuses to switch** if uncommitted changes would be overwritten: commit or
 
 **Merge vs rebase:** true history (2-parent commit) vs linear history (rewritten commits); **never rebase commits others have**.
 
-**Conflict:** both sides changed the same lines; git marks them
-(`<<<<<<< HEAD` yours `=======` theirs `>>>>>>> feature`). Edit → `git add` → `git commit`
+**Conflict:** both branches changed the **same part of the same file** relative to the common ancestor. Git **pauses** the merge (no merge commit); `git status` lists **unmerged paths** ("both modified"); git marks them
+(`<<<<<<< HEAD` yours `=======` theirs `>>>>>>> feature`). Edit → `git add` (**marks it resolved**) → `git commit` (finishes the merge)
 (or `git rebase --continue`). Cancel with `git merge --abort` / `git rebase --abort`.
 
 **Strategies:** feature branch + **PR** · **Git Flow** (`main`, `develop`, `feature/*`, `release/*`, **`hotfix/*` from `main`**) · **trunk-based** (short branches, CI).
@@ -126,6 +138,8 @@ A **clean model** (objects, refs, HEAD, three trees) with an **inconsistent lang
 
 ## 8. Tuesday's lab (from the syllabus)
 
+**Porcelain vs plumbing:** porcelain = user-level commands (branches, commits, tags, staging, remotes); plumbing = low-level commands on the primitive objects and the three sections.
+
 **Part 1: a mini git in ~100 lines**, implementing git's low-level ("**plumbing**") commands:
 
 | Command | What it does |
@@ -135,6 +149,13 @@ A **clean model** (objects, refs, HEAD, three trees) with an **inconsistent lang
 | **`write-tree`** | turns the **index** into a tree object (and sub-trees) and prints its hash |
 | **`commit-tree`** | creates a commit from a tree hash + optional parent (`-p`) + message, prints its hash. It does **not** move any branch (`git update-ref` / `git commit` does that) |
 
+More plumbing from the lecturer's notes:
+- **`update-index --add --cacheinfo <mode> <hash> <name>`**: put an entry in the index (staging) by hand. Modes: `100644` normal file, `100755` executable, `120000` symlink (`040000` = a tree in a listing).
+- **`update-ref refs/heads/main <hash>`**: set a ref safely (a branch is just a file holding a hash, e.g. `echo <hash> > .git/refs/heads/main`).
+- **`symbolic-ref HEAD [refs/heads/test]`**: read or set HEAD. HEAD is a **symbolic reference**: it points to **another ref**, not a hash (`ref: refs/heads/main`); `git commit` uses the commit it resolves to as the parent.
+- An object is stored at `.git/objects/` + **first 2 hash chars (folder) + the other 38 (file name)**; the hash covers a **header + the content**. `main^{tree}` = the tree of main's last commit.
+- **Tag object** (a 4th object type, made by `git tag -a`): tagger, date, message and a pointer to a commit; like a branch that **never moves**.
+
 `git commit` = `write-tree` + `commit-tree` + moving the branch ref. "Porcelain" commands
 (add, commit, checkout) are built on these.
 
@@ -143,11 +164,29 @@ via the reflog (section 6).
 
 ---
 
-## 9. Domain-Driven Design (DDD)
+## 9. Mental models: Naur's theory and DDD
 
-**Domain model:** a shared model of the problem's concepts, rules and vocabulary. It is the
-team's **theory of the program** (Naur, W1). **When code is cheap** (agents write it), this model
-is the lasting asset, and it must be **written down** (glossary, invariants, specs).
+**Naur, *Programming as Theory Building* (1985):** programming mainly produces a **theory** held by the team: knowledge of how part of the world is handled by the program, which lets you **do it, explain it, justify it and answer questions about it** (Ryle's notion of theory).
+- **Evidence:** (1) group B extended group A's compiler with **full source, design documents and access to A**, yet its patches "destroyed the power and simplicity" of the design; A saw this instantly. (2) The authors of a 200,000-line real-time system found faults from their own knowledge + code; other teams with full documentation kept getting stuck.
+- **Conclusion:** the theory can't be fully written down; it lives in people. A program is **alive** while a team holding its theory controls it and **dies** when the team dissolves; reviving it from documentation alone is "strictly impossible".
+- **Three capabilities the theory gives:** (1) **relate the program to the world** (which code ↔ which part of the world, what is relevant); (2) **justify the design**; (3) **respond to change** by **extending** the design, not patching it. All rely on noticing similarities, which can't be written as rules.
+- **Lecturer's note:** "system 1"-like AI makes "can't be expressed" less convincing, but owning a project still means you can explain, justify and adapt it.
+
+**Git example:** user 1 knows the commands (add, commit, checkout -b, merge); user 2 holds the **model** (snapshots, content-hash storage, git only adds data, three states, a branch is a pointer) and can **derive** behavior: branching is cheap (one pointer), fast-forward = the target is a descendant, a "lost" commit is recoverable (nothing erased), a conflict = both branches changed the same region vs a common ancestor. User 1 is like **group B**: full documentation, stuck at the first surprise.
+
+**Theory vs specs:** a spec is a finite set of explicit statements about **what** the system must do: an **output** (snapshot) of the theory. The theory is **why** these requirements and not others, what is central vs incidental, and where the design can stretch. **Two teams with the same spec but different theories will answer the next change request incompatibly.**
+
+**DDD (Evans, 2003)** gives *practices* to build the theory deliberately, share it and keep code aligned:
+- **Domain model** = a deliberately selective abstraction of what the team knows; the shared understanding, not a diagram. Built by **knowledge crunching**: developers + domain experts iterate over examples, find gaps, rebuild.
+- Naur ↔ DDD: relate to the world ↔ **model-driven design** (code structure mirrors the model); justify ↔ arguing design **in domain terms**; respond to change ↔ **refactoring toward deeper insight** (revise the model, don't bolt on special cases).
+- **Ubiquitous language = the shared, visible part of the theory.** A vocabulary isn't a theory, but it does 3 jobs: **transmission** (newcomers learn by being corrected), **detecting drift** (if a change can't be phrased naturally, it would be a patch), **binding code to theory** (code names = domain terms). Git's UL: blob, tree, commit, ref, HEAD, index, working tree.
+- **Bounded context = the scope of one team's theory**; a **context map** describes how different teams' theories relate.
+- **Naur vs DDD:** Naur says the theory **can't** be expressed and there's no right method; DDD is more optimistic (make most of it explicit) and is patterns, not a procedure.
+- **With AI agents:** the UL is the **cheapest part of the theory to give an LLM**: a glossary in the instructions, specs that must use the terms (e.g. OpenSpec capabilities `issue-enrichment`, `issue-routing`), and **rejecting code that brings synonyms or new concepts**. The team stays responsible for relevance, for when the model must change, and for the code's integrity with the theory.
+
+## 10. Domain-Driven Design (DDD) concepts
+
+**When code is cheap** (agents write it), the domain model is the lasting asset, and as much of it as possible must be **written down** (glossary, invariants, specs).
 
 | Concept | Meaning | Example (our triage system) |
 |---|---|---|
@@ -187,3 +226,13 @@ is the lasting asset, and it must be **written down** (glossary, invariants, spe
 21. What is a bounded context, and how does it help AI context management?<details><summary>Answer</summary>A boundary inside which one model's terms are consistent. Like information hiding, it lets an agent work with only that context's model, keeping its context small.</details>
 22. What is an anti-corruption layer, reinterpreted for agents?<details><summary>Answer</summary>A translation layer keeping an outside model out of yours; for agents, insulation against conventions imported from training data (e.g. validating LLM output into a strict TriageRecord).</details>
 23. Entity vs value object? Which is a git blob?<details><summary>Answer</summary>An entity has a persisting identity (an issue); a value object is defined by its values (a severity). A blob is a value object: its identity is its content hash.</details>
+24. What are the 5 ideas in the lecturer's git mental model?<details><summary>Answer</summary>Stream of snapshots; local operations (full history in .git); integrity by SHA-1 checksums, content stored by hash; git only adds data; three states (modified, staged, committed).</details>
+25. What are the three states of a file, and the three sections of a project?<details><summary>Answer</summary>Modified, staged, committed; the working tree, the staging area (index) and the git directory (what clone copies).</details>
+26. You edit a file, `git add` it, and edit it again. What will `git commit` include?<details><summary>Answer</summary>Only the staged (first) version; the second change stays modified and unstaged.</details>
+27. When is a merge a fast-forward, and when a three-way merge?<details><summary>Answer</summary>Fast-forward when the target is a descendant of the current commit (no divergent work): the pointer just moves. Otherwise git merges the two tips with their common ancestor into a new merge commit with 2 parents.</details>
+28. What is a symbolic reference? Give the example.<details><summary>Answer</summary>A ref that points to another ref, not a hash: HEAD contains `ref: refs/heads/main`. Read/set with `git symbolic-ref`.</details>
+29. What is Naur's main claim, and what is his evidence?<details><summary>Answer</summary>Programming builds a theory held by the team, which documentation can't fully capture. Group B, with full source and docs, still broke group A's compiler design; a 200k-line system's own team found faults others couldn't.</details>
+30. What three capabilities does holding the theory give?<details><summary>Answer</summary>Relate the program to the world, justify the design, and respond to change by extending rather than patching.</details>
+31. Theory vs spec?<details><summary>Answer</summary>A spec is an explicit snapshot of what the system must do; the theory is why, what's central, and where it can stretch. Same spec + different theories → incompatible answers to the next change.</details>
+32. What 3 jobs does the ubiquitous language do for the theory?<details><summary>Answer</summary>Transmission (newcomers corrected on terms), detecting drift (awkward phrasing = a patch coming), and binding code to theory (code names = domain terms).</details>
+33. How do the two git users illustrate Naur?<details><summary>Answer</summary>One knows commands, one holds the model and can derive behavior (cheap branches, fast-forward, recovery, conflicts). The command-only user is like group B: full docs, stuck at the first surprise.</details>
