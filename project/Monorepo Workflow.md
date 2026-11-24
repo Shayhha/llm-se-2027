@@ -52,17 +52,35 @@ For a mixed-language monorepo (TypeScript/JavaScript + Python), structure is cri
 
 ```
 Project-monorepo/
-├── package.json               # Root scripts (Turborepo/Nx)
+├── README.md
+├── package.json               # Root scripts
 ├── pnpm-workspace.yaml        # JS Workspace config
-├── .github/                   # CI/CD workflows (CODEOWNERS lives here)
+├── .github/work               # CI/CD workflows (CODEOWNERS lives here)
+├── build                      # Monorepo build configuration
+|   ├-- compose.yaml           # Docker compose configuration for integration
+|   └── mise.toml / justfile   # one entry point for every task
 │
+├── openspec/                  # Specifications
+├── docs/
+|   ├── adr/                   # Decision records
+|   ├── journal.md             # Journal of the team
+|   ├── glossary.md            # Ubiquitous language of the domain
+|   ├── verifiability.md       # Indicate how each spec item can be verified
+|
 ├── apps/
 │   ├── web/                   # Next.js Application
 │   │   ├── package.json
 │   │   └── src/...
-│
+│   ├── data-exploration/      # UI Application to explore dataset
+│   │   ├── package.json
+│   │   └── src/...
+│ 
 ├── services/
-│   ├── api/                   # Python Microservice (Cloud Run or Docker)
+│   ├── api1/                  # Python Microservice (Cloud Run or Docker)
+│   │   ├── Dockerfile
+│   │   ├── main.py
+│   │   └── requirements.txt
+│   ├── api2/                  # Python Microservice (Cloud Run or Docker)
 │   │   ├── Dockerfile
 │   │   ├── main.py
 │   │   └── requirements.txt
@@ -92,7 +110,7 @@ Instead, we will use the following platform:
 - **Python Modules**
   - **uv workspaces** to manage multiple Python projects from a unified uv environment.
   <https://www.danilchenko.dev/posts/uv-workspaces-monorepo/> provides instructions on how to setup the Python uv workspace.
-  - Use the following repo structure:
+  - Use the repo structure described above.
   ```
   repo/
   ├── openspec/                 # specs + change proposals (source of truth)
@@ -142,10 +160,9 @@ In a large project, we could use the CODEOWNERS configuration in GitHub to autom
 /apps/web/ @my-org/frontend-team
 /packages/ui/ @my-org/frontend-team
 
-# Backend team owns the Python service and Data Connect schemas
+# Backend team owns the Python service and Database schemas
 /services/api/ @my-org/backend-team
-/dataconnect.yaml @my-org/backend-team
-/firestore.rules @my-org/backend-team
+/data.yaml @my-org/backend-team
 
 # Both teams must agree on shared types or contracts
 /packages/ts-types/ @my-org/frontend-team @my-org/backend-team
