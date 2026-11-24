@@ -113,17 +113,6 @@ Instead, we will use the following platform:
   - **uv workspaces** to manage multiple Python projects from a unified uv environment.
   <https://www.danilchenko.dev/posts/uv-workspaces-monorepo/> provides instructions on how to setup the Python uv workspace.
   - Use the repo structure described above.
-  ```
-  repo/
-  ├── openspec/                 # specs + change proposals (source of truth)
-  ├── apps/web/                 # Next.js
-  ├── services/<svc>/           # Python microservices (FastAPI)
-  ├── packages/py-common/       # shared Python libs (models, auth, logging)
-  ├── packages/ts-api-client/   # generated from OpenAPI — never hand-edited
-  ├── docs/                     # MD docs, ADRs
-  ├── compose.yaml
-  └── mise.toml / justfile      # one entry point for every task
-  ```
   - **FastAPI** with **Pydantic v2**, so types become API contracts.
 - **TypeScript Modules (UI)**
   - pnpm workspaces with tsc --noEmit in strict mode as a CI gate, separate from next build.
